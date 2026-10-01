@@ -3,194 +3,164 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ahmed Coaching — Client Management</title>
-<meta name="description" content="Ahmed Coaching client management and coaching portal">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<title>Ahmed Coaching</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@500;600;700;800&display=swap');
+:root{--bg:#080a0e;--panel:#10141b;--panel2:#151a22;--line:#252c37;--text:#f6f7f9;--muted:#929baa;--lime:#d7ff3f;--danger:#ff6675}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#18202d 0,#080a0e 40%);color:var(--text);font-family:Cairo,Arial,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}.loginbox{width:min(430px,100%);background:rgba(16,20,27,.96);border:1px solid var(--line);border-radius:26px;padding:30px;box-shadow:0 30px 100px #0008}.logo{font-family:Inter;font-weight:900;letter-spacing:1px;font-size:23px}.accent{color:var(--lime)}.login h1{font-size:30px;margin:35px 0 8px}.muted{color:var(--muted)}label{display:block;margin:16px 0 7px;color:#c5cad3;font-size:13px}input,textarea,select{width:100%;background:#0b0e13;color:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;outline:none}input:focus,textarea:focus,select:focus{border-color:#64711e}.primary{background:var(--lime);color:#080a0e;border:0;border-radius:12px;padding:12px 18px;font-weight:900}.secondary{background:#202631;color:#fff;border:1px solid #303846;border-radius:12px;padding:11px 15px;font-weight:700}.danger{background:#31161b;color:#ff9ba5;border:1px solid #54242b;border-radius:10px;padding:9px 12px}.app{display:grid;grid-template-columns:245px 1fr;min-height:100vh}.side{position:sticky;top:0;height:100vh;padding:22px 16px;border-left:1px solid var(--line);background:#0c0f14}.side .logo{padding:8px 10px 24px}.nav button{width:100%;text-align:right;background:transparent;color:#9da6b4;border:0;border-radius:12px;padding:12px 13px;margin:3px 0;font-weight:700}.nav button.active,.nav button:hover{background:#181e27;color:#fff}.main{padding:28px;max-width:1500px;width:100%}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:24px}.top h1{margin:0;font-size:29px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stat,.panel,.client{background:rgba(16,20,27,.94);border:1px solid var(--line);border-radius:18px}.stat{padding:18px}.stat b{display:block;font-size:25px;margin-top:4px}.panel{padding:20px;margin-top:18px}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}.panelhead h2{margin:0;font-size:18px}.clients{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.client{padding:17px}.client h3{margin:0 0 4px}.pill{display:inline-block;background:#1b222d;border:1px solid #2a3340;border-radius:999px;padding:4px 9px;color:#cdd3db;font-size:11px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1;min-width:90px}.section{display:none}.section.active{display:block}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.full{grid-column:1/-1}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.empty{text-align:center;padding:35px;color:var(--muted);border:1px dashed #343c48;border-radius:15px}.modal{position:fixed;inset:0;background:#000b;z-index:50;display:none;place-items:center;padding:18px}.modal.show{display:grid}.modalbox{width:min(600px,100%);max-height:90vh;overflow:auto;background:#11151c;border:1px solid #303846;border-radius:22px;padding:22px}.modalhead{display:flex;justify-content:space-between;align-items:center}.close{background:#252c37;color:#fff;border:0;border-radius:9px;padding:7px 11px}.sharelink{direction:ltr;min-height:110px}.toast{position:fixed;bottom:22px;left:22px;background:#fff;color:#080a0e;padding:12px 16px;border-radius:12px;font-weight:800;z-index:100;display:none}.toast.show{display:block}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.side{height:auto;position:relative;border-left:0;border-bottom:1px solid var(--line)}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.cards{grid-template-columns:repeat(2,1fr)}.clients{grid-template-columns:1fr 1fr}}@media(max-width:650px){.main{padding:16px}.cards,.clients,.formgrid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
 <body>
-<div id="toast" class="toast"></div>
-
-<!-- LOGIN -->
-<section id="loginView" class="login-view">
-  <div class="login-art">
-    <div class="login-overlay"></div>
-    <div class="login-copy">
-      <span class="eyebrow">AHMED COACHING • PERFORMANCE SYSTEM</span>
-      <h1>Train Smart.<br><em>Track Everything.</em></h1>
-      <p>نظام واحد لإدارة الـNutrition والـTraining والـProgress والمتابعة.</p>
-      <div class="mini-tags"><span>Nutrition</span><span>Training</span><span>Progress</span><span>Check-ins</span></div>
-    </div>
-  </div>
-  <div class="login-panel">
-    <div class="brand"><span class="brand-icon">A</span><div><b>AHMED</b><small>COACHING</small></div></div>
-    <div class="login-head"><span class="eyebrow">WELCOME BACK</span><h2>دخول الحساب</h2><p>ادخل بياناتك للوصول للـdashboard.</p></div>
-    <label>Email</label><input id="email" type="email" placeholder="you@example.com" autocomplete="username">
-    <label>Password</label><input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
-    <button id="loginBtn" class="primary big">Sign In <span>→</span></button>
-    <div id="loginMsg" class="msg"></div>
-    <div class="login-foot">Private coaching workspace • Ahmed Coaching</div>
-  </div>
-</section>
-
-<!-- APP -->
-<div id="app" class="app hidden">
-  <aside class="sidebar">
-    <div class="brand sidebar-brand"><span class="brand-icon">A</span><div><b>AHMED</b><small>COACHING</small></div></div>
-    <div class="coach-mini">
-      <div class="coach-avatar"><img src="coach-3.png" alt="Coach"></div>
-      <div><b>Ahmed</b><span>Head Coach</span></div>
-      <i>●</i>
-    </div>
-    <nav>
-      <button class="nav-item active" data-page="dashboard"><span>⌂</span><b>Dashboard</b><small>الرئيسية</small></button>
-      <button class="nav-item" data-page="clients"><span>♙</span><b>Clients</b><small>العملاء</small></button>
-      <button class="nav-item" data-page="nutrition"><span>◈</span><b>Nutrition</b><small>التغذية</small></button>
-      <button class="nav-item" data-page="training"><span>⚡</span><b>Training</b><small>التمرين</small></button>
-      <button class="nav-item" data-page="progress"><span>↗</span><b>Progress</b><small>التقدم</small></button>
-      <button class="nav-item" data-page="checkins"><span>✓</span><b>Check-ins</b><small>المتابعة</small></button>
-      <button class="nav-item" data-page="settings"><span>⚙</span><b>Settings</b><small>الإعدادات</small></button>
-    </nav>
-    <div class="sidebar-bottom">
-      <div class="status-dot"><i></i> System Online</div>
-      <button id="logoutBtn" class="logout">↪ تسجيل خروج</button>
-    </div>
-  </aside>
-
-  <main class="main">
-    <header class="topbar">
-      <div class="mobile-brand"><span class="brand-icon">A</span><b>AHMED COACHING</b></div>
-      <div class="top-search"><span>⌕</span><input placeholder="Search clients, plans, exercises..."></div>
-      <div class="top-actions"><button class="icon-btn">◔</button><button class="avatar-btn"><img src="coach-3.png"></button></div>
-    </header>
-
-    <div class="content">
-      <!-- DASHBOARD -->
-      <section id="page-dashboard" class="page active">
-        <div class="page-title"><div><span class="eyebrow">COACH OVERVIEW</span><h1>أهلاً بيك يا أحمد <span>👋</span></h1><p>كل اللي يهمك في مكان واحد — clients, plans & progress.</p></div><button class="primary" onclick="openModal('clientModal')">+ Add New Client</button></div>
-        <div class="coach-hero">
-          <div class="hero-text"><span class="eyebrow">YOUR COACHING HUB</span><h2>Build. Track. <em>Progress.</em></h2><p>إدارة الخطط، متابعة العملاء، وتسجيل التقدم بدون زحمة.</p><div class="hero-pills"><span>30-Day Plans</span><span>5-Day Training</span><span>Weekly Check-ins</span></div></div>
-          <div class="hero-photo"><img src="coach-1.png" alt="Ahmed Coaching"></div>
-        </div>
-        <div class="stats-row">
-          <div class="metric"><div class="metric-icon blue">♙</div><span>إجمالي العملاء</span><strong id="mClients">0</strong><small>Active clients</small></div>
-          <div class="metric"><div class="metric-icon green">✓</div><span>خطط نشطة</span><strong id="mPlans">0</strong><small>Active plans</small></div>
-          <div class="metric"><div class="metric-icon purple">↗</div><span>Check-ins</span><strong id="mCheckins">0</strong><small>This week</small></div>
-          <div class="metric"><div class="metric-icon orange">◷</div><span>متوسط الالتزام</span><strong id="mCompliance">—</strong><small>Last 7 days</small></div>
-        </div>
-        <div class="grid-2">
-          <div class="panel chart-panel"><div class="panel-head"><div><span class="eyebrow">CLIENT ACTIVITY</span><h3>حركة العملاء</h3></div><select><option>Last 7 days</option><option>Last 30 days</option></select></div><div class="chart"><div class="chart-line"></div><div class="bars"><i style="height:42%"></i><i style="height:60%"></i><i style="height:52%"></i><i style="height:76%"></i><i style="height:64%"></i><i style="height:90%"></i><i style="height:72%"></i></div><div class="chart-labels"><span>Sat</span><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span></div></div></div>
-          <div class="panel"><div class="panel-head"><div><span class="eyebrow">QUICK ACTIONS</span><h3>اختصارات</h3></div></div><div class="quick-grid"><button onclick="go('clients')"><b>+ Client</b><span>إضافة عميل</span></button><button onclick="go('nutrition')"><b>+ Diet</b><span>خطة غذائية</span></button><button onclick="go('training')"><b>+ Workout</b><span>خطة تمرين</span></button><button onclick="go('checkins')"><b>Review</b><span>Check-ins</span></button></div></div>
-        </div>
-        <div class="panel clients-panel"><div class="panel-head"><div><span class="eyebrow">CLIENTS</span><h3>آخر العملاء</h3></div><button class="text-btn" onclick="go('clients')">View all →</button></div><div id="dashboardClients" class="client-table"></div></div>
-      </section>
-
-      <!-- CLIENTS -->
-      <section id="page-clients" class="page">
-        <div class="page-title"><div><span class="eyebrow">CLIENT MANAGEMENT</span><h1>العملاء <em>Clients</em></h1><p>كل عميل له profile وخطة ومساحة منفصلة.</p></div><button class="primary" onclick="openModal('clientModal')">+ Add Client</button></div>
-        <div class="toolbar"><div class="search-field">⌕ <input id="clientSearch" placeholder="ابحث باسم العميل..."></div><select><option>All clients</option><option>Active</option><option>Needs review</option></select></div>
-        <div id="clientsGrid" class="clients-grid"></div>
-      </section>
-
-      <!-- NUTRITION -->
-      <section id="page-nutrition" class="page">
-        <div class="page-title"><div><span class="eyebrow">NUTRITION PLANNER</span><h1>النظام الغذائي <em>Nutrition</em></h1><p>خطة 30 يوم مع حساب السعرات والـMacros.</p></div><button class="primary">Save Plan</button></div>
-        <div class="selected-client"><div class="client-avatar">M</div><div><b id="dietClient">اختار عميل</b><span>Goal: Fat Loss • 30 Days</span></div><button class="outline">Change Client</button></div>
-        <div class="nutrition-top"><div class="macro-card"><span>Daily Calories</span><b id="dietCalories">2,400</b><small>kcal / day</small></div><div class="macro-card"><span>Protein</span><b>180g</b><small>30%</small></div><div class="macro-card"><span>Carbs</span><b>240g</b><small>40%</small></div><div class="macro-card"><span>Fat</span><b>80g</b><small>30%</small></div><div class="macro-card calculator"><span>Macro Calculator</span><div><input id="macroCal" type="number" value="2400"><button onclick="macroCalc()">Calculate</button></div><small id="macroResult">P 180g • C 240g • F 80g</small></div></div>
-        <div class="panel table-panel"><div class="panel-head"><div><span class="eyebrow">30 DAY PLAN</span><h3>Daily Meal Plan</h3></div><button class="text-btn">+ Add Meal</button></div><div class="responsive-table"><table><thead><tr><th>Meal</th><th>Food 01</th><th>Food 02</th><th>Food 03</th><th>Food 04</th><th>Calories</th><th>P</th><th>C</th><th>F</th></tr></thead><tbody>
-          <tr><td><b>01</b><small>Breakfast</small></td><td>Greek Yogurt<br><small>250g</small></td><td>Oats<br><small>60g</small></td><td>Banana<br><small>120g</small></td><td>Honey<br><small>10g</small></td><td>520</td><td>30</td><td>74</td><td>12</td></tr>
-          <tr><td><b>02</b><small>Snack</small></td><td>Apple<br><small>180g</small></td><td>Peanut Butter<br><small>20g</small></td><td>—</td><td>—</td><td>210</td><td>6</td><td>28</td><td>9</td></tr>
-          <tr><td><b>03</b><small>Lunch</small></td><td>Rice<br><small>250g cooked</small></td><td>Beef<br><small>180g</small></td><td>Salad<br><small>150g</small></td><td>Olive Oil<br><small>10g</small></td><td>760</td><td>52</td><td>78</td><td>25</td></tr>
-          <tr><td><b>04</b><small>Pre Workout</small></td><td>Toast<br><small>80g</small></td><td>Banana<br><small>100g</small></td><td>—</td><td>—</td><td>330</td><td>9</td><td>62</td><td>5</td></tr>
-          <tr><td><b>05</b><small>Dinner</small></td><td>Potato<br><small>250g</small></td><td>Fish<br><small>200g</small></td><td>Yogurt<br><small>150g</small></td><td>—</td><td>580</td><td>53</td><td>52</td><td>16</td></tr>
-        </tbody><tfoot><tr><th colspan="5">Daily Total</th><th>2,400</th><th>150</th><th>294</th><th>67</th></tr></tfoot></table></div></div>
-      </section>
-
-      <!-- TRAINING -->
-      <section id="page-training" class="page">
-        <div class="page-title"><div><span class="eyebrow">TRAINING BUILDER</span><h1>خطة التمرين <em>Training</em></h1><p>5 أيام — حتى 7 تمارين لكل يوم مع تسجيل الـPerformance.</p></div><button class="primary">Save Workout</button></div>
-        <div class="training-layout"><div class="day-list"><span class="eyebrow">WEEK SPLIT</span><button class="day active"><b>Day 01</b><span>Chest + Triceps</span></button><button class="day"><b>Day 02</b><span>Back + Biceps</span></button><button class="day"><b>Day 03</b><span>Legs</span></button><button class="day"><b>Day 04</b><span>Shoulders + Arms</span></button><button class="day"><b>Day 05</b><span>Upper Focus</span></button></div>
-          <div class="workout-editor"><div class="workout-header"><div><span class="eyebrow">DAY 01</span><h3>Chest + Triceps</h3></div><span class="pill">7 Exercises</span></div><div class="exercise-head"><span>Exercise</span><span>Sets</span><span>Reps</span><span>Rest</span><span>Notes</span></div>
-            <div class="exercise-row"><b>01. Barbell Bench Press</b><input value="3"><input value="8–10"><input value="120s"><span>Progressive overload</span></div>
-            <div class="exercise-row"><b>02. Incline Dumbbell Press</b><input value="3"><input value="10–12"><input value="90s"><span>Controlled eccentric</span></div>
-            <div class="exercise-row"><b>03. Cable Fly</b><input value="3"><input value="12–15"><input value="75s"><span>Full stretch</span></div>
-            <div class="exercise-row"><b>04. Lateral Raise</b><input value="3"><input value="12–15"><input value="60s"><span>Clean reps</span></div>
-            <div class="exercise-row"><b>05. Rope Pushdown</b><input value="3"><input value="10–12"><input value="75s"><span>Lockout</span></div>
-            <div class="exercise-row"><b>06. Overhead Triceps Extension</b><input value="3"><input value="10–12"><input value="75s"><span>Long head focus</span></div>
-            <div class="exercise-row"><b>07. Push-up Finisher</b><input value="2"><input value="AMRAP"><input value="60s"><span>Optional</span></div>
-            <div class="performance"><div><span class="eyebrow">PERFORMANCE LOG</span><h4>تسجيل الأداء — 3 Weeks</h4></div><div class="perf-grid"><select><option>Week 01</option><option>Week 02</option><option>Week 03</option></select><input placeholder="Weight kg"><input placeholder="Reps"><input placeholder="RIR"><button class="primary">Save Log</button></div></div>
-          </div></div>
-      </section>
-
-      <!-- PROGRESS -->
-      <section id="page-progress" class="page">
-        <div class="page-title"><div><span class="eyebrow">PROGRESS TRACKER</span><h1>التقدم <em>Progress</em></h1><p>وزن الجسم + أداء التمرين على مدار 3 أسابيع.</p></div><button class="primary">+ Add Entry</button></div>
-        <div class="progress-hero"><div><span class="eyebrow">CURRENT CLIENT</span><h2>محمد أحمد</h2><p>Fat Loss • Week 2 of 3</p></div><div class="big-weight"><span>Current Weight</span><b>82.4 <small>kg</small></b><em>−1.8 kg</em></div></div>
-        <div class="grid-2"><div class="panel"><div class="panel-head"><h3>Weight Trend</h3><span class="pill green">3 Weeks</span></div><div class="weight-chart"><div class="weight-path"></div><div class="weight-points"><i style="left:8%;top:25%"></i><i style="left:28%;top:38%"></i><i style="left:48%;top:52%"></i><i style="left:68%;top:64%"></i><i style="left:88%;top:73%"></i></div></div><div class="chart-foot"><span>84.2 kg</span><span>82.4 kg</span></div></div>
-        <div class="panel"><div class="panel-head"><h3>Weekly Check-in</h3><span class="pill">Week 02</span></div><div class="check-list"><div><span>Nutrition adherence</span><b>9/10</b></div><div><span>Training adherence</span><b>10/10</b></div><div><span>Sleep</span><b>8/10</b></div><div><span>Water</span><b>3.0 L</b></div></div></div></div>
-      </section>
-
-      <!-- CHECKINS -->
-      <section id="page-checkins" class="page">
-        <div class="page-title"><div><span class="eyebrow">WEEKLY FOLLOW-UP</span><h1>المتابعة <em>Check-ins</em></h1><p>راجع الالتزام والتعديلات المطلوبة لكل عميل.</p></div><button class="primary">Review All</button></div>
-        <div class="checkin-cards"><div class="checkin-card"><div class="avatar blue">M</div><div class="ci-main"><b>محمد أحمد</b><span>Submitted 2h ago</span><p>الأكل تمام، التمرين كويس، محتاج تعديل بسيط في السعرات.</p></div><button class="outline">Review</button></div><div class="checkin-card"><div class="avatar purple">O</div><div class="ci-main"><b>عمر علي</b><span>Submitted yesterday</span><p>الوزن ثابت الأسبوع ده.</p></div><button class="outline">Review</button></div></div>
-      </section>
-
-      <!-- SETTINGS -->
-      <section id="page-settings" class="page">
-        <div class="page-title"><div><span class="eyebrow">SYSTEM SETTINGS</span><h1>الإعدادات <em>Settings</em></h1><p>إعدادات الحساب والنظام.</p></div></div>
-        <div class="settings-grid"><div class="panel setting-card"><span class="eyebrow">COACH PROFILE</span><h3>Ahmed Coaching</h3><p>Coach Dashboard & Client Management</p><button class="outline">Edit Profile</button></div><div class="panel setting-card"><span class="eyebrow">PLAN DEFAULTS</span><h3>30 Days / 5 Training Days</h3><p>القيم الافتراضية للخطط الجديدة.</p><button class="outline">Edit Defaults</button></div><div class="panel setting-card"><span class="eyebrow">SECURITY</span><h3>Private Client Data</h3><p>كل عميل معزول عن العملاء الآخرين.</p><span class="secure">● Protected</span></div></div>
-      </section>
-    </div>
-  </main>
+<div id="login" class="login">
+ <div class="loginbox">
+  <div class="logo">AHMED <span class="accent">COACHING</span></div>
+  <h1>لوحة الكوتش</h1><p class="muted">ادخل بإيميل الكوتش لفتح النظام.</p>
+  <label>الإيميل</label><input id="loginEmail" type="email" placeholder="اكتب إيميلك هنا">
+  <button class="primary" style="width:100%;margin-top:15px" onclick="login()">دخول</button>
+  <p id="loginErr" class="muted"></p>
+ </div>
 </div>
 
-<!-- ADD CLIENT MODAL -->
-<div id="clientModal" class="modal"><div class="modal-box"><button class="modal-close" onclick="closeModal('clientModal')">×</button><span class="eyebrow">NEW CLIENT</span><h2>إضافة عميل جديد</h2><p>جهز الـprofile الأول، وبعدها تضيف الـNutrition والـTraining.</p><div class="modal-grid"><input id="newName" placeholder="اسم العميل"><input id="newAge" type="number" placeholder="السن"><input id="newHeight" type="number" placeholder="الطول cm"><input id="newWeight" type="number" step="0.1" placeholder="الوزن kg"><input id="newGoal" placeholder="الهدف"><input id="newEmail" type="email" placeholder="Client Email"></div><button class="primary big" onclick="demoAddClient()">Create Client</button></div></div>
+<div id="app" class="app hidden">
+<aside class="side">
+ <div class="logo">AHMED <span class="accent">COACHING</span></div>
+ <div class="nav">
+  <button data-sec="dashboard" class="active">الرئيسية</button>
+  <button data-sec="clients">العملاء</button>
+  <button data-sec="nutrition">التغذية</button>
+  <button data-sec="training">التمرين</button>
+  <button data-sec="progress">التقدم</button>
+  <button data-sec="checkins">المتابعات</button>
+  <button data-sec="settings">الإعدادات</button>
+ </div>
+</aside>
+<main class="main">
+ <section id="dashboard" class="section active">
+  <div class="top"><div><div class="muted">Ahmed Coaching</div><h1>لوحة التحكم</h1></div><button class="secondary" onclick="logout()">خروج</button></div>
+  <div class="cards">
+   <div class="stat">إجمالي العملاء<b id="statClients">0</b></div>
+   <div class="stat">الخطط الغذائية<b id="statNutrition">0</b></div>
+   <div class="stat">أيام التمرين<b id="statTraining">0</b></div>
+   <div class="stat">المتابعات<b id="statCheckins">0</b></div>
+  </div>
+  <div class="panel"><div class="panelhead"><h2>آخر العملاء</h2><button class="primary" onclick="openClient()">+ إضافة عميل</button></div><div id="dashClients" class="clients"></div></div>
+ </section>
+
+ <section id="clients" class="section">
+  <div class="top"><div><div class="muted">إدارة العملاء</div><h1>العملاء</h1></div><button class="primary" onclick="openClient()">+ إضافة عميل</button></div>
+  <div id="clientList" class="clients"></div>
+ </section>
+
+ <section id="nutrition" class="section">
+  <div class="top"><div><div class="muted">Client Plans</div><h1>التغذية</h1></div></div>
+  <div class="panel"><div class="panelhead"><h2 id="selectedTitle">اختار عميل</h2><select id="nutritionClient" onchange="renderNutrition()"></select></div><div id="nutritionList"></div><button class="primary" onclick="addMeal()">+ إضافة وجبة</button></div>
+ </section>
+
+ <section id="training" class="section">
+  <div class="top"><div><div class="muted">Training</div><h1>التمرين</h1></div></div>
+  <div class="panel"><div class="panelhead"><h2>خطة التمرين</h2><select id="trainingClient" onchange="renderTraining()"></select></div><div id="trainingList"></div><button class="primary" onclick="addDay()">+ إضافة يوم</button></div>
+ </section>
+
+ <section id="progress" class="section">
+  <div class="top"><div><div class="muted">Progress</div><h1>التقدم</h1></div></div>
+  <div class="panel"><div class="panelhead"><h2>سجل الوزن والأداء</h2><select id="progressClient" onchange="renderProgress()"></select></div><div id="progressList"></div><button class="primary" onclick="addProgress()">+ إضافة قياس</button></div>
+ </section>
+
+ <section id="checkins" class="section">
+  <div class="top"><div><div class="muted">Weekly Check-ins</div><h1>المتابعات</h1></div></div>
+  <div class="panel"><div class="panelhead"><h2>المتابعات الأسبوعية</h2><select id="checkinClient" onchange="renderCheckins()"></select></div><div id="checkinList"></div><button class="primary" onclick="addCheckin()">+ إضافة متابعة</button></div>
+ </section>
+
+ <section id="settings" class="section">
+  <div class="top"><div><div class="muted">System</div><h1>الإعدادات</h1></div></div>
+  <div class="panel"><h2>نسخة احتياطية</h2><p class="muted">احفظ نسخة من بياناتك أو استرجعها على نفس النظام.</p>
+   <div class="actions"><button class="primary" onclick="exportData()">تصدير البيانات</button><button class="secondary" onclick="document.getElementById('importFile').click()">استيراد البيانات</button></div>
+   <input id="importFile" type="file" accept=".json" class="hidden" onchange="importData(event)">
+  </div>
+ </section>
+</main>
+</div>
+
+<div id="clientModal" class="modal"><div class="modalbox">
+ <div class="modalhead"><h2 id="clientModalTitle">إضافة عميل</h2><button class="close" onclick="closeModal('clientModal')">×</button></div>
+ <div class="formgrid">
+  <div><label>الاسم</label><input id="cName"></div><div><label>الإيميل</label><input id="cEmail" type="email"></div>
+  <div><label>العمر</label><input id="cAge" type="number"></div><div><label>الهدف</label><input id="cGoal"></div>
+  <div><label>الطول</label><input id="cHeight" type="number"></div><div><label>الوزن</label><input id="cWeight" type="number"></div>
+ </div>
+ <button class="primary" style="margin-top:16px;width:100%" onclick="saveClient()">حفظ العميل</button>
+</div></div>
+
+<div id="shareModal" class="modal"><div class="modalbox">
+ <div class="modalhead"><h2>لينك العميل</h2><button class="close" onclick="closeModal('shareModal')">×</button></div>
+ <p class="muted">اللينك جاهز. تقدر تنسخه أو تبعته على واتساب.</p>
+ <textarea id="shareUrl" class="sharelink" readonly></textarea>
+ <div class="actions"><button class="primary" onclick="copyLink()">نسخ اللينك</button><button class="secondary" onclick="whatsappLink()">إرسال واتساب</button></div>
+</div></div>
+<div id="toast" class="toast"></div>
 
 <script>
-let sb=null, currentUser=null;
-const demoClients=[
- {name:"محمد أحمد",age:21,weight:"82.4",height:"182",goal:"Fat Loss",status:"Active",initial:"M"},
- {name:"عمر علي",age:24,weight:"91.0",height:"186",goal:"Muscle Gain",status:"Active",initial:"O"},
- {name:"كريم حسن",age:20,weight:"76.8",height:"178",goal:"Recomp",status:"Review",initial:"K"},
- {name:"يوسف محمود",age:22,weight:"88.2",height:"181",goal:"Fat Loss",status:"Active",initial:"Y"}
-];
-function $(id){return document.getElementById(id)}
-function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2200)}
-function go(page){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));$("page-"+page).classList.add("active");document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===page));window.scrollTo({top:0,behavior:"smooth"});if(page==="clients")renderClients()}
-function openModal(id){$(id).classList.add("show")}
-function closeModal(id){$(id).classList.remove("show")}
-document.querySelectorAll(".nav-item").forEach(n=>n.onclick=()=>go(n.dataset.page));
-function renderClients(filter=""){
- const list=demoClients.filter(c=>c.name.includes(filter)||c.goal.toLowerCase().includes(filter.toLowerCase()));
- $("clientsGrid").innerHTML=list.map(c=>`<article class="client-card"><div class="client-card-top"><div class="large-avatar">${c.initial}</div><span class="status ${c.status==="Active"?"active":"review"}">${c.status}</span></div><h3>${c.name}</h3><p>${c.goal} • ${c.age} yrs</p><div class="client-facts"><span><b>${c.weight}</b> kg</span><span><b>${c.height}</b> cm</span><span><b>30</b> days</span></div><div class="client-card-actions"><button class="outline" onclick="selectClient('${c.name}')">Open Profile</button><button class="icon-btn">⋯</button></div></article>`).join("");
- $("mClients").textContent=demoClients.length;
- $("mPlans").textContent=demoClients.filter(c=>c.status==="Active").length;
- $("mCheckins").textContent="18";
- $("mCompliance").textContent="84%";
- $("dashboardClients").innerHTML=demoClients.slice(0,4).map(c=>`<div class="table-client"><div class="table-person"><span class="small-avatar">${c.initial}</span><b>${c.name}</b></div><span>${c.weight} kg</span><span>${c.goal}</span><span class="status active">${c.status}</span><span>Today</span></div>`).join("");
+const KEY="ahmed_coaching_FINAL_V4";
+let S=JSON.parse(localStorage.getItem(KEY)||'null')||{clients:[],nutrition:{},training:{},progress:{},checkins:{}};
+let editing=null,currentClient=null,share="";
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(KEY,JSON.stringify(S));refresh()}
+function toast(t){$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2200)}
+function login(){const e=$("loginEmail").value.trim().toLowerCase();if(!e){$("loginErr").textContent="اكتب الإيميل الأول.";return}sessionStorage.setItem("coach","1");$("login").classList.add("hidden");$("app").classList.remove("hidden");refresh()}
+function logout(){sessionStorage.removeItem("coach");location.reload()}
+if(sessionStorage.getItem("coach")){$("login").classList.add("hidden");$("app").classList.remove("hidden")}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));$(b.dataset.sec).classList.add("active")});
+function refresh(){
+ $("statClients").textContent=S.clients.length;
+ $("statNutrition").textContent=Object.values(S.nutrition).reduce((a,x)=>a+x.length,0);
+ $("statTraining").textContent=Object.values(S.training).reduce((a,x)=>a+x.length,0);
+ $("statCheckins").textContent=Object.values(S.checkins).reduce((a,x)=>a+x.length,0);
+ renderClients();fillSelects();renderNutrition();renderTraining();renderProgress();renderCheckins();
 }
-function selectClient(name){$("dietClient").textContent=name;go("nutrition");toast(name+" selected")}
-function macroCalc(){const c=+$("macroCal").value||0;const p=Math.round(c*.30/4),car=Math.round(c*.40/4),f=Math.round(c*.30/9);$("macroResult").textContent=`P ${p}g • C ${car}g • F ${f}g`;$("dietCalories").textContent=c.toLocaleString()}
-function demoAddClient(){const n=$("newName").value.trim();if(!n){toast("اكتب اسم العميل الأول");return}demoClients.unshift({name:n,age:+$("newAge").value||0,weight:$("newWeight").value||"—",height:$("newHeight").value||"—",goal:$("newGoal").value||"—",status:"Active",initial:n[0]});closeModal("clientModal");renderClients();toast("Client created successfully ✓")}
-$("clientSearch").addEventListener("input",e=>renderClients(e.target.value.trim()));
-$("loginBtn").onclick=async()=>{
- const email=$("email").value.trim(),pass=$("password").value;
- if(!email||!pass){$("loginMsg").textContent="اكتب الإيميل والباسورد.";return}
+function clientCard(c){
+ return `<div class="client"><h3>${esc(c.name)}</h3><span class="pill">${esc(c.goal||"بدون هدف")}</span><p class="muted">${esc(c.weight||"—")} كجم · ${esc(c.height||"—")} سم</p>
+ <div class="actions"><button class="secondary" onclick="openClient('${c.id}')">تعديل</button><button class="primary" onclick="openShare('${c.id}')">لينك العميل</button><button class="danger" onclick="delClient('${c.id}')">حذف</button></div></div>`
+}
+function renderClients(){const h=S.clients.length?S.clients.map(clientCard).join(""):'<div class="empty" style="grid-column:1/-1">لسه مفيش عملاء. أضف أول عميل.</div>';$("clientList").innerHTML=h;$("dashClients").innerHTML=S.clients.slice(-6).reverse().map(clientCard).join("")||'<div class="empty" style="grid-column:1/-1">لسه مفيش عملاء.</div>'}
+function openClient(id){editing=id||null;$("clientModalTitle").textContent=id?"تعديل عميل":"إضافة عميل";const c=S.clients.find(x=>x.id===id)||{};["Name","Email","Age","Goal","Height","Weight"].forEach(k=>{$("c"+k).value=c[k.toLowerCase()]||""});$("clientModal").classList.add("show")}
+function closeModal(id){$(id).classList.remove("show")}
+function saveClient(){const c={id:editing||Date.now().toString(),name:$("cName").value.trim(),email:$("cEmail").value.trim(),age:$("cAge").value,goal:$("cGoal").value.trim(),height:$("cHeight").value,weight:$("cWeight").value};if(!c.name){toast("اكتب اسم العميل");return}const i=S.clients.findIndex(x=>x.id===c.id);if(i>=0)S.clients[i]=c;else S.clients.push(c);["nutrition","training","progress","checkins"].forEach(k=>{if(!S[k][c.id])S[k][c.id]=[]});save();closeModal("clientModal");toast("تم حفظ العميل ✓")}
+function delClient(id){if(!confirm("حذف العميل وكل بياناته؟"))return;S.clients=S.clients.filter(c=>c.id!==id);["nutrition","training","progress","checkins"].forEach(k=>delete S[k][id]);save()}
+function fillSelects(){["nutritionClient","trainingClient","progressClient","checkinClient"].forEach(id=>{const el=$(id),old=el.value;el.innerHTML='<option value="">اختار عميل</option>'+S.clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");if(S.clients.some(c=>c.id===old))el.value=old})}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function renderNutrition(){const id=$("nutritionClient").value;const a=id?S.nutrition[id]||[]:[];$("nutritionList").innerHTML=a.map((x,i)=>`<div class="client"><b>${esc(x.name)}</b><p class="muted">${esc(x.foods)}</p><span class="pill">${esc(x.calories||"")} kcal</span><button class="danger" style="float:left" onclick="removeItem('nutrition','${id}',${i})">حذف</button></div>`).join("")||'<div class="empty">اختار عميل أو أضف وجبة.</div>'}
+function addMeal(){const id=$("nutritionClient").value;if(!id){toast("اختار العميل الأول");return}const name=prompt("اسم الوجبة؟");if(!name)return;const foods=prompt("الأكل والكميات؟")||"";const calories=prompt("السعرات؟")||"";(S.nutrition[id]||=[]).push({name,foods,calories});save()}
+function renderTraining(){const id=$("trainingClient").value;const a=id?S.training[id]||[]:[];$("trainingList").innerHTML=a.map((d,i)=>`<div class="client"><b>${esc(d.name)}</b><p class="muted">${d.exercises.length} تمارين</p>${d.exercises.map((e,j)=>`<div style="padding:8px 0;border-top:1px solid #252c37">${j+1}. ${esc(e.name)} — ${esc(e.sets)} × ${esc(e.reps)}</div>`).join("")}<button class="danger" onclick="removeItem('training','${id}',${i})">حذف اليوم</button></div>`).join("")||'<div class="empty">اختار عميل أو أضف يوم.</div>'}
+function addDay(){const id=$("trainingClient").value;if(!id){toast("اختار العميل الأول");return}const name=prompt("اسم اليوم؟");if(!name)return;let ex=[];for(let i=0;i<7;i++){const n=prompt("اسم التمرين "+(i+1)+" (إلغاء لإنهاء اليوم)");if(!n)break;ex.push({name:n,sets:prompt("Sets")||"",reps:prompt("Reps")||""})}if(!ex.length)return;(S.training[id]||=[]).push({name,exercises:ex});save()}
+function renderProgress(){const id=$("progressClient").value,a=id?S.progress[id]||[]:[];$("progressList").innerHTML=a.map((x,i)=>`<div class="client"><b>${esc(x.date)}</b><p>الوزن: ${esc(x.weight)} كجم · الأداء: ${esc(x.performance)}</p><button class="danger" onclick="removeItem('progress','${id}',${i})">حذف</button></div>`).join("")||'<div class="empty">لا توجد قياسات.</div>'}
+function addProgress(){const id=$("progressClient").value;if(!id){toast("اختار العميل الأول");return}const weight=prompt("الوزن؟");if(!weight)return;(S.progress[id]||=[]).push({date:new Date().toLocaleDateString("ar-EG"),weight,performance:prompt("الأداء/القوة؟")||""});save()}
+function renderCheckins(){const id=$("checkinClient").value,a=id?S.checkins[id]||[]:[];$("checkinList").innerHTML=a.map((x,i)=>`<div class="client"><b>الأسبوع ${i+1}</b><p>${esc(x.notes)}</p><button class="danger" onclick="removeItem('checkins','${id}',${i})">حذف</button></div>`).join("")||'<div class="empty">لا توجد متابعات.</div>'}
+function addCheckin(){const id=$("checkinClient").value;if(!id){toast("اختار العميل الأول");return}const notes=prompt("ملاحظات المتابعة؟");if(notes==null)return;(S.checkins[id]||=[]).push({notes});save()}
+function removeItem(k,id,i){S[k][id].splice(i,1);save()}
+
+function b64(bytes){let s="";for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+async function openShare(id){
+ const c=S.clients.find(x=>x.id===id);if(!c){toast("العميل غير موجود");return}
  try{
-  sb=supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_PUBLISHABLE_KEY);
-  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error) throw error;
-  currentUser=data.user;$("loginView").classList.add("hidden");$("app").classList.remove("hidden");renderClients();toast("Welcome back, Ahmed ✓");
- }catch(e){$("loginMsg").textContent="بيانات الدخول غير صحيحة أو الحساب غير متاح."}
-};
-$("logoutBtn").onclick=async()=>{if(sb)await sb.auth.signOut();location.reload()};
-window.addEventListener("load",()=>{renderClients()});
+  const payload={v:1,profile:c,nutrition:S.nutrition[id]||[],training:S.training[id]||[],progress:S.progress[id]||[],checkins:S.checkins[id]||[]};
+  const raw=new TextEncoder().encode(JSON.stringify(payload));
+  const key=await crypto.subtle.generateKey({name:"AES-GCM",length:256},true,["encrypt","decrypt"]);
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const enc=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,raw);
+  const kb=new Uint8Array(await crypto.subtle.exportKey("raw",key));
+  const pack=new Uint8Array(12+enc.byteLength);pack.set(iv);pack.set(new Uint8Array(enc),12);
+  const u=new URL(location.href);u.hash="client=1&k="+b64(kb)+"&d="+b64(pack);
+  share=u.href;$("shareUrl").value=share;$("shareModal").classList.add("show");
+ }catch(e){console.error(e);toast("افتح الموقع من GitHub Pages أو HTTPS ثم جرّب")}
+}
+async function copyLink(){if(!share)return;try{await navigator.clipboard.writeText(share)}catch(e){$("shareUrl").focus();$("shareUrl").select();document.execCommand("copy")}toast("تم نسخ اللينك ✓")}
+function whatsappLink(){if(!share)return;window.open("https://wa.me/?text="+encodeURIComponent("لينك المتابعة الخاص بيك:\n"+share),"_blank")}
+
+function exportData(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}));a.download="ahmed-coaching-backup.json";a.click()}
+function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();toast("تم الاستيراد ✓")}catch(x){toast("ملف غير صالح")}};r.readAsText(f)}
+refresh();
 </script>
-</body>
-</html>
+</body></html>
