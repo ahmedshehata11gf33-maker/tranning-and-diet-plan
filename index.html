@@ -1,8 +1,404 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ahmed Coaching</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@600;700;800&display=swap" rel="stylesheet"><style>body{margin:0;background:#090c10;color:#f7f8fa;font-family:Cairo,Arial}button,input,textarea{font:inherit}button{cursor:pointer}.side{position:fixed;right:0;top:0;bottom:0;width:240px;background:#0c1015;border-left:1px solid #27303b;padding:20px}.main{margin-right:240px;padding:28px}.logo{width:43px;height:43px;background:#c9ff3e;color:#111;border-radius:12px;display:grid;place-items:center;font:800 23px Inter}.brand{display:flex;gap:9px;align-items:center;margin-bottom:25px}.brand b{font:800 16px Inter;display:block}.brand small{font:700 9px Inter;color:#8d98a7}.side button{width:100%;background:none;border:0;color:#aab3bf;text-align:right;padding:11px;border-radius:11px;margin:2px 0}.side button:hover,.side button.active{background:#19211b;color:#fff}.page{display:none}.page.active{display:block}.hero,.card,.form,.meal,.exercise,.log{background:#11161d;border:1px solid #27303b;border-radius:17px;padding:18px}.hero{padding:32px;background:linear-gradient(115deg,#182312,#111820 70%);box-shadow:0 20px 60px #0006;position:relative;overflow:hidden}.hero:after{content:'AHMED';position:absolute;left:-10px;bottom:-35px;font:800 100px Inter;color:#ffffff05;letter-spacing:4px}.hero h1{font-size:35px}.hero em,.green{color:#c9ff3e;font-style:normal}.muted{color:#8d98a7;font-size:12px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.stat b{font:800 27px Inter;display:block;margin:7px 0}.section{display:flex;justify-content:space-between;align-items:end;margin:30px 0 13px}.btn{border:1px solid #27303b;background:#171e27;color:#fff;border-radius:10px;padding:9px 14px}.primary{background:#c9ff3e;color:#080b07;border-color:#c9ff3e;font-weight:800}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.three{grid-template-columns:repeat(3,1fr)}input,textarea{width:100%;background:#0b1016;border:1px solid #27303b;color:#fff;border-radius:10px;padding:10px;outline:0;box-sizing:border-box}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.meal{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px}.exercise,.log{margin-bottom:9px}.macro{font-size:10px;background:#ffffff09;border-radius:7px;padding:4px 7px;display:inline-block;margin:4px}.linkbox{margin-top:15px}.linkbox input{width:calc(100% - 180px)}.water{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:12px}.water button{height:38px;background:#151b23;border:1px solid #27303b;border-radius:8px;color:#999}.water button.on{background:#c9ff3e;color:#111}.progress{height:8px;background:#252c35;border-radius:10px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;background:#c9ff3e}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:10px;border-bottom:1px solid #27303b;text-align:right;font-size:12px}.empty{text-align:center;color:#8d98a7;padding:30px}.portal{max-width:1050px;margin:auto;padding:20px}.portalNav{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}.portalNav .active{background:#c9ff3e;color:#111}@media(max-width:850px){.side{display:none}.main{margin:0;padding:15px 12px 70px}.cards{grid-template-columns:repeat(2,1fr)}.three,.formgrid{grid-template-columns:1fr}.water{grid-template-columns:repeat(4,1fr)}.linkbox input{width:100%;margin-bottom:7px}}.savehint{display:flex;align-items:center;gap:8px;margin-top:10px;color:#aeb8c4;font-size:11px}.savehint:before{content:'✓';width:22px;height:22px;border-radius:50%;background:#c9ff3e;color:#0a0d08;display:grid;place-items:center;font-weight:800}.section h2{font-size:22px}.section>div>h2{margin:3px 0}.card.stat{min-height:115px}.meal:hover,.exercise:hover,.log:hover{border-color:#3a4552;transform:translateY(-1px);transition:.18s}</style></head><body><div id="coach"><aside class="side"><div class="brand"><div class="logo">A</div><div><b>AHMED</b><small>COACHING</small></div></div><button class="active" onclick="go('home')">⌂ الرئيسية</button><button onclick="go('client')">♙ العميل</button><button onclick="go('diet')">◈ الدايت</button><button onclick="go('training')">⚡ التمرين</button><button onclick="go('report')">↗ المتابعة</button></aside><main class="main"><section id="home" class="page active"><div class="hero"><span class="muted">COACH WORKSPACE</span><h1>Build. Track. <em>Progress.</em></h1><p class="muted">جهز للعميل الدايت والتمرين، اعمله لينك خاص، وهو يسجل وزنه والمياه وأوزان الجيم.</p></div><div class="cards"><div class="card stat">العميل<b id="dn">--</b></div><div class="card stat">الوزن<b id="dw">--</b></div><div class="card stat">وجبات<b id="dm">0</b></div><div class="card stat">أيام تدريب<b id="dd">0</b></div></div></section><section id="client" class="page"><div class="section"><h2>بيانات العميل واللينك</h2></div><div class="form"><div class="formgrid three"><input id="name" placeholder="اسم العميل"><input id="email" placeholder="Email"><input id="age" type="number" placeholder="السن"><input id="height" type="number" placeholder="الطول"><input id="weight" type="number" step=".1" placeholder="الوزن"><input id="goal" placeholder="الهدف"></div><div class="actions"><button class="btn primary" onclick="saveClient()">حفظ بيانات العميل ✓</button><button class="btn primary" onclick="makeLink()">إنشاء لينك العميل</button></div><div id="saveState" class="savehint" style="display:none">تم حفظ بيانات العميل بنجاح</div><div id="lb" class="linkbox" style="display:none"><input id="link" readonly><button class="btn" onclick="copyLink()">Copy</button><button class="btn primary" onclick="wa()">WhatsApp</button></div></div><div id="clientInfo" class="card" style="margin-top:12px"></div></section><section id="diet" class="page"><div class="section"><div><span class="muted">NUTRITION PLAN</span><h2>شيت الدايت</h2></div><button class="btn primary" onclick="addMeal()">+ حفظ الوجبة</button></div><div class="form"><div class="formgrid three"><input id="mn" placeholder="اسم الوجبة"><input id="mf" placeholder="الأكل والكميات"><input id="mc" type="number" placeholder="السعرات"><input id="mp" placeholder="Protein"><input id="mcarb" placeholder="Carbs"><input id="mfat" placeholder="Fat"></div><div class="actions"><button class="btn primary" onclick="addMeal()">حفظ الوجبة ✓</button><span class="muted">الوجبة هتظهر تحت بعد الحفظ.</span></div></div><div id="meals" style="margin-top:12px"></div></section><section id="training" class="page"><div class="section"><div><span class="muted">TRAINING PLAN</span><h2>شيت التمرين — 5 أيام</h2></div><button class="btn primary" onclick="addDay()">+ حفظ يوم تدريب</button></div><div id="days"></div></section><section id="report" class="page"><div class="section"><h2>متابعة العميل</h2><button class="btn" onclick="renderReport()">تحديث</button></div><div class="cards"><div class="card stat">مياه اليوم<b id="rw">0/8</b></div><div class="card stat">أوزان مسجلة<b id="rweight">0</b></div><div class="card stat">أوزان جيم<b id="rgym">0</b></div></div><div class="section"><h2>الوزن</h2></div><div class="card"><table class="table"><thead><tr><th>الأسبوع</th><th>الوزن</th><th>التاريخ</th><th>ملاحظة</th></tr></thead><tbody id="wr"></tbody></table></div><div class="section"><h2>أوزان الجيم</h2></div><div id="gr"></div></section></main></div><script>
-const K='AHMED_FINAL_V6';let D=load();function load(){try{return Object.assign({client:null,meals:[],days:[]},JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){return{client:null,meals:[],days:[]}}}function save(){localStorage.setItem(K,JSON.stringify(D));render()}function go(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(p).classList.add('active')}function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function saveClient(){if(!name.value.trim())return alert('اكتب اسم العميل');D.client={name:name.value,email:email.value,age:age.value,height:height.value,weight:weight.value,goal:goal.value};save();alert('تم حفظ العميل ✓')}function makeLink(){if(!D.client)return alert('احفظ العميل الأول');let s=btoa(unescape(encodeURIComponent(JSON.stringify({client:D.client,meals:D.meals,days:D.days}))));link.value=location.href.split('#')[0]+'#client='+s;lb.style.display='block'}function copyLink(){navigator.clipboard?.writeText(link.value).then(()=>alert('تم النسخ ✓')).catch(()=>{link.select();document.execCommand('copy');alert('تم النسخ ✓')})}function wa(){window.open('https://wa.me/?text='+encodeURIComponent('لينك المتابعة الخاص بيك:\n'+link.value),'_blank')}
-function addMeal(){if(!mn.value.trim())return alert('اكتب اسم الوجبة');D.meals.push({n:mn.value,f:mf.value,cal:mc.value,p:mp.value,c:mcarb.value,fat:mfat.value});['mn','mf','mc','mp','mcarb','mfat'].forEach(x=>document.getElementById(x).value='');save()}function delMeal(i){D.meals.splice(i,1);save()}function addDay(){if(D.days.length>=5)return alert('أقصى حاجة 5 أيام');let n=prompt('اسم اليوم','Day '+(D.days.length+1));if(n===null)return;let raw=prompt('اكتب التمارين: اسم التمرين | Sets | Reps، كل تمرين في سطر')||'';let ex=raw.split('\n').filter(Boolean).map(s=>{let a=s.split('|').map(x=>x.trim());return{n:a[0],sets:a[1]||3,reps:a[2]||10}});D.days.push({n,ex});save()}function delDay(i){D.days.splice(i,1);save()}
-function logs(){try{return JSON.parse(localStorage.getItem('AHMED_CLIENT_LOGS')||'{"weights":[],"water":0,"gym":[]}')}catch(e){return{weights:[],water:0,gym:[]}}}function renderReport(){let l=logs();rw.textContent=(l.water||0)+'/8';rweight.textContent=l.weights.length;rgym.textContent=l.gym.length;wr.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note)}</td></tr>`).join(''):'<tr><td colspan="4">لا توجد بيانات.</td></tr>';gr.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><b>${esc(x.ex)}</b><div class="muted">${esc(x.w)} kg • ${esc(x.r)} reps • ${esc(x.date)}</div></div>`).join(''):'<div class="card empty">لا توجد أوزان جيم.</div>'}function render(){let c=D.client;dn.textContent=c?.name||'--';dw.textContent=c?.weight||'--';dm.textContent=D.meals.length;dd.textContent=D.days.length;clientInfo.innerHTML=c?`<b>${esc(c.name)}</b><div class="muted">${esc(c.goal||'--')} • ${esc(c.weight||'--')} kg</div>`:'<span class="muted">لم يتم إضافة عميل.</span>';meals.innerHTML=D.meals.length?D.meals.map((m,i)=>`<div class="meal"><div><h3>${esc(m.n)}</h3><div class="muted">${esc(m.f)}</div><span class="macro">${esc(m.cal||'--')} kcal</span><span class="macro">P ${esc(m.p||'--')}g</span><span class="macro">C ${esc(m.c||'--')}g</span><span class="macro">F ${esc(m.fat||'--')}g</span></div><button class="btn" onclick="delMeal(${i})">حذف</button></div>`).join(''):'<div class="card empty">أضف وجبات الدايت هنا.</div>';days.innerHTML=D.days.length?D.days.map((d,i)=>`<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><h3>${esc(d.n)}</h3><button class="btn" onclick="delDay(${i})">حذف</button></div>${d.ex.map((x,j)=>`<div class="exercise"><b>${j+1}. ${esc(x.n)}</b><div class="muted">${esc(x.sets)} Sets × ${esc(x.reps)} Reps</div></div>`).join('')}</div>`).join(''):'<div class="card empty">أضف أيام التمرين.</div>';renderReport()}render();
-function portal(){let m=location.hash.match(/^#client=(.+)$/);if(!m)return;let p;try{p=JSON.parse(decodeURIComponent(escape(atob(m[1]))))}catch(e){return}document.body.innerHTML=`<div class="portal"><div class="brand"><div class="logo">A</div><div><b>AHMED COACHING</b><small>CLIENT PORTAL</small></div></div><div class="card"><span class="muted">CLIENT</span><h1>أهلاً ${esc(p.client.name)} 👋</h1><div class="muted">${esc(p.client.goal||'Coaching Plan')} • ${esc(p.client.weight||'--')} kg</div></div><div class="portalNav"><button class="btn active" onclick="tab('diet')">الدايت</button><button class="btn" onclick="tab('training')">التمرين</button><button class="btn" onclick="tab('weight')">الوزن</button><button class="btn" onclick="tab('water')">المياه</button><button class="btn" onclick="tab('gym')">أوزان الجيم</button></div><div id="pc"></div></div>`;window.P=p;tab('diet')}
-function ck(){return 'AHMED_CLIENT_LOGS_'+(P.client.email||P.client.name)}function cl(){try{return JSON.parse(localStorage.getItem(ck())||'{"weights":[],"water":0,"gym":[]}')}catch(e){return{weights:[],water:0,gym:[]}}}function sl(x){localStorage.setItem(ck(),JSON.stringify(x))}function tab(t){document.querySelectorAll('.portalNav button').forEach((b,i)=>b.classList.toggle('active',['diet','training','weight','water','gym'][i]===t));let p=P,l=cl(),pc=document.getElementById('pc');if(t==='diet')pc.innerHTML=p.meals.length?p.meals.map(m=>`<div class="meal"><div><h3>${esc(m.n)}</h3><div class="muted">${esc(m.f)}</div><span class="macro">${esc(m.cal||'--')} kcal</span><span class="macro">P ${esc(m.p||'--')}g</span><span class="macro">C ${esc(m.c||'--')}g</span><span class="macro">F ${esc(m.fat||'--')}g</span></div></div>`).join(''):'<div class="card empty">الكوتش لسه ما أضافش الدايت.</div>';if(t==='training')pc.innerHTML=p.days.length?p.days.map(d=>`<div class="card" style="margin-bottom:10px"><h3>${esc(d.n)}</h3>${d.ex.map(x=>`<div class="exercise"><b>${esc(x.n)}</b><div class="muted">${esc(x.sets)} Sets × ${esc(x.reps)} Reps</div></div>`).join('')}</div>`).join(''):'<div class="card empty">الكوتش لسه ما أضافش التمرين.</div>';if(t==='weight')pc.innerHTML=`<div class="form"><h2>تسجيل الوزن</h2><div class="formgrid three"><input id="pw" type="number" step=".1" placeholder="الوزن kg"><input id="pweek" type="number" placeholder="الأسبوع"><input id="pnote" placeholder="ملاحظة"></div><button class="btn primary" style="margin-top:10px" onclick="addW()">حفظ</button></div><div class="card" style="margin-top:12px"><table class="table"><thead><tr><th>الأسبوع</th><th>الوزن</th><th>التاريخ</th><th>ملاحظة</th></tr></thead><tbody>${l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note)}</td></tr>`).join('')||'<tr><td colspan="4">لا توجد بيانات</td></tr>'}</tbody></table></div>`;if(t==='water'){pc.innerHTML='<div class="card"><h2>المياه اليوم</h2><div class="water" id="wb"></div><div class="progress"><i id="bar"></i></div><h3 id="wn" class="green"></h3></div>';waterUI()}if(t==='gym')pc.innerHTML=`<div class="form"><h2>تسجيل وزن التمرين</h2><div class="formgrid three"><input id="ge" placeholder="اسم التمرين"><input id="gw" type="number" step=".5" placeholder="الوزن kg"><input id="gr" type="number" placeholder="Reps"></div><button class="btn primary" style="margin-top:10px" onclick="addG()">حفظ</button></div><div style="margin-top:12px">${l.gym.slice().reverse().map(x=>`<div class="log"><b>${esc(x.ex)}</b><div class="muted">${esc(x.w)} kg • ${esc(x.r)} reps • ${esc(x.date)}</div></div>`).join('')||'<div class="card empty">لا توجد تسجيلات.</div>'}</div>`}function addW(){let l=cl();if(!pw.value||!pweek.value)return alert('اكتب الوزن والأسبوع');l.weights.push({weight:pw.value,week:pweek.value,note:pnote.value,date:new Date().toLocaleDateString('ar-EG')});sl(l);tab('weight')}function waterUI(){let l=cl(),b=document.getElementById('wb');b.innerHTML='';for(let i=0;i<8;i++){let x=document.createElement('button');x.textContent='💧';x.className=i<l.water?'on':'';x.onclick=()=>{let n=cl();n.water=i+1;sl(n);waterUI()};b.appendChild(x)}wn.textContent=l.water+'/8 أكواب';bar.style.width=(l.water/8*100)+'%'}function addG(){let l=cl();if(!ge.value||!gw.value||!gr.value)return alert('اكتب التمرين والوزن والـreps');l.gym.push({ex:ge.value,w:gw.value,r:gr.value,date:new Date().toLocaleDateString('ar-EG')});sl(l);tab('gym')}if(location.hash.startsWith('#client='))portal();
-</script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ahmed Coaching</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080b0f;--panel:#10151c;--panel2:#151c25;--line:#28313c;--text:#f7f8fa;--muted:#8d98a7;--lime:#caff3f;--danger:#ff6978;--blue:#62b0ff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 78% -10%,#31450d 0,#0b1016 30%,#080b0f 60%);color:var(--text);font-family:Cairo,Arial,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.app{min-height:100vh}.sidebar{position:fixed;right:0;top:0;bottom:0;width:250px;background:#0c1016;border-left:1px solid var(--line);padding:22px 16px;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;margin:0 6px 25px}.logo{width:44px;height:44px;border-radius:13px;background:var(--lime);color:#0a0d08;display:grid;place-items:center;font:800 23px Inter}.brand b{font:800 17px Inter;letter-spacing:1px;display:block}.brand small{font:700 9px Inter;color:var(--muted);letter-spacing:2px}
+.client-mini{padding:13px;background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-bottom:17px}.client-mini strong{display:block}.client-mini span{font-size:11px;color:var(--muted)}
+nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:right;padding:12px 13px;border-radius:11px;margin:2px 0;display:flex;gap:10px;align-items:center}nav button:hover{background:#171e27;color:#fff}nav button.active{background:#192119;color:#fff;box-shadow:inset -3px 0 var(--lime)}nav i{font-style:normal;width:22px;text-align:center}
+.main{margin-right:250px;padding:28px 34px 55px;max-width:1450px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.eyebrow{font:800 10px Inter;color:var(--lime);letter-spacing:1.8px}.top h1{margin:4px 0 0;font-size:27px}.avatar{width:44px;height:44px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-weight:800}
+.page{display:none}.page.active{display:block}.hero{border:1px solid #34451a;border-radius:23px;padding:30px;background:linear-gradient(115deg,#182311,#111820 70%);box-shadow:0 22px 60px #0006;position:relative;overflow:hidden}.hero:after{content:"AHMED";position:absolute;left:-5px;bottom:-36px;font:800 105px Inter;color:#ffffff05}.hero h2{font-size:35px;line-height:1.15;margin:7px 0}.hero em{color:var(--lime);font-style:normal}.hero p{color:#b3bdc8;max-width:650px}.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{background:#ffffff09;border:1px solid #ffffff12;padding:6px 11px;border-radius:30px;font-size:11px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:14px}.card,.form,.meal,.exercise,.log{background:linear-gradient(145deg,#131922,#10151c);border:1px solid var(--line);border-radius:17px;padding:18px;box-shadow:0 10px 30px #0002}.stat{min-height:112px}.stat b{font:800 25px Inter;display:block;margin:7px 0}.muted{color:var(--muted);font-size:12px}
+.section{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:29px 0 13px}.section h2{margin:0;font-size:21px}.btn{border:1px solid #303946;background:#171e27;color:#fff;border-radius:11px;padding:10px 15px;transition:.18s}.btn:hover{transform:translateY(-1px);border-color:#647181}.btn.primary{background:linear-gradient(135deg,#dbff70,#b9ee35);color:#090c07;border-color:#d7ff66;font-weight:800;box-shadow:0 8px 22px #caff3f1d}.btn.danger{color:#ff9aa5}
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.formgrid.three{grid-template-columns:repeat(3,1fr)}input,textarea,select{width:100%;background:#0a0f15;border:1px solid #2b3440;color:#fff;border-radius:11px;padding:11px 12px;outline:none}input:focus,textarea:focus,select:focus{border-color:var(--lime);box-shadow:0 0 0 3px #caff3f10}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.saved{display:flex;align-items:center;gap:8px;margin-top:10px;color:#c9d4df;font-size:11px}.saved b{width:22px;height:22px;border-radius:50%;background:var(--lime);color:#0a0d08;display:grid;place-items:center}
+.linkbox{margin-top:16px;padding:14px;border-radius:14px;background:#111b0e;border:1px solid #3b5119}.linkrow{display:flex;gap:8px;margin-top:8px}.linkrow input{flex:1}.note{padding:12px 14px;border-radius:12px;background:#141b12;border:1px solid #34451a;color:#dceac4;font-size:11px;line-height:1.8;margin-top:10px}
+.meal{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px}.meal h3,.exercise h3{margin:0 0 4px;font-size:15px}.tag{display:inline-block;font-size:10px;background:#ffffff08;border-radius:7px;padding:4px 7px;margin:4px 3px 0 0;color:#c1cad4}
+.day{margin-bottom:12px}.dayhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.exercise{margin:8px 0;padding:13px;background:#0e141b;box-shadow:none}.empty{text-align:center;color:var(--muted);padding:30px}
+.table{width:100%;border-collapse:collapse}.table th,.table td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:right;font-size:12px}.table th{color:var(--muted);font-size:10px}.water{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.water button{height:40px;border:1px solid var(--line);border-radius:9px;background:#151b23;color:#929dab}.water button.on{background:var(--lime);color:#0a0d08;border-color:var(--lime)}.progress{height:8px;background:#252d37;border-radius:20px;overflow:hidden;margin-top:12px}.progress i{display:block;height:100%;background:var(--lime);width:0}
+.mobile{display:none}.portal{max-width:1050px;margin:auto;padding:20px 15px 55px}.portal-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.portal-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}.portal-tabs .active{background:var(--lime);color:#0a0d08;border-color:var(--lime)}
+@media(max-width:900px){.sidebar{display:none}.main{margin:0;padding:17px 13px 80px}.mobile{display:flex;position:fixed;right:0;left:0;bottom:0;height:62px;background:#0c1117f5;border-top:1px solid var(--line);z-index:30;justify-content:space-around}.mobile button{border:0;background:transparent;color:#a5aebb}.mobile button.active{color:var(--lime)}.mobile i{display:block;font-style:normal;font-size:18px}.cards{grid-template-columns:repeat(2,1fr)}.hero h2{font-size:28px}.formgrid,.formgrid.three{grid-template-columns:1fr}.water{grid-template-columns:repeat(4,1fr)}.linkrow{flex-wrap:wrap}.linkrow input{min-width:100%}}
+@media(max-width:520px){.top{display:none}.cards{gap:8px}.card{padding:14px}.hero{padding:22px}.hero:after{display:none}}
+</style>
+</head>
+<body>
+
+<div id="coachApp">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">A</div><div><b>AHMED</b><small>COACHING</small></div></div>
+  <div class="client-mini"><strong id="miniName">No Client</strong><span id="miniGoal">Coach Workspace</span></div>
+  <nav>
+    <button class="active" data-page="home"><i>⌂</i> الرئيسية</button>
+    <button data-page="client"><i>♙</i> العميل</button>
+    <button data-page="diet"><i>◈</i> الدايت</button>
+    <button data-page="training"><i>⚡</i> التمرين</button>
+    <button data-page="report"><i>↗</i> المتابعة</button>
+  </nav>
+</aside>
+
+<main class="main">
+<div class="top"><div><span class="eyebrow">COACH WORKSPACE</span><h1>Ahmed Coaching</h1></div><div class="avatar">A</div></div>
+
+<section id="home" class="page active">
+  <div class="hero"><span class="eyebrow">COACHING HUB</span><h2>Build. Track. <em>Progress.</em></h2><p>جهز للعميل الدايت والتمرين، احفظ البيانات، واعمله لينك خاص يدخل منه ويسجل الوزن والمياه وأوزان الجيم.</p><div class="chips"><span class="chip">Diet</span><span class="chip">Training</span><span class="chip">Weight</span><span class="chip">Water</span><span class="chip">Gym Weights</span></div></div>
+  <div class="cards">
+    <div class="card stat"><span class="muted">العميل</span><b id="dashName">--</b><span class="muted">Current client</span></div>
+    <div class="card stat"><span class="muted">الوزن</span><b id="dashWeight">--</b><span class="muted">kg</span></div>
+    <div class="card stat"><span class="muted">الوجبات</span><b id="dashMeals">0</b><span class="muted">في الدايت</span></div>
+    <div class="card stat"><span class="muted">أيام التدريب</span><b id="dashDays">0</b><span class="muted">days</span></div>
+  </div>
+  <div class="section"><h2>الخطوات</h2></div>
+  <div class="cards">
+    <button class="card btn" onclick="showPage('client')">① بيانات العميل</button>
+    <button class="card btn" onclick="showPage('diet')">② جهز الدايت</button>
+    <button class="card btn" onclick="showPage('training')">③ جهز التمرين</button>
+    <button class="card btn" onclick="showPage('report')">④ تابع التسجيلات</button>
+  </div>
+</section>
+
+<section id="client" class="page">
+  <div class="section"><div><span class="eyebrow">CLIENT PROFILE</span><h2>بيانات العميل</h2></div></div>
+  <div class="form">
+    <div class="formgrid three">
+      <input id="cName" placeholder="اسم العميل">
+      <input id="cEmail" placeholder="Email العميل">
+      <input id="cAge" type="number" placeholder="السن">
+      <input id="cHeight" type="number" placeholder="الطول cm">
+      <input id="cWeight" type="number" step=".1" placeholder="الوزن kg">
+      <input id="cGoal" placeholder="الهدف">
+    </div>
+    <div class="actions">
+      <button class="btn primary" onclick="saveClient()">حفظ بيانات العميل ✓</button>
+      <button class="btn" onclick="newClient()">عميل جديد</button>
+    </div>
+    <div id="clientSaved" class="saved hidden"><b>✓</b> تم حفظ بيانات العميل على الجهاز.</div>
+    <div class="linkbox">
+      <div class="eyebrow">CLIENT PORTAL LINK</div>
+      <div class="muted">بعد ما تخلص الدايت والتمرين، اضغط إنشاء اللينك.</div>
+      <div class="linkrow"><input id="clientLink" readonly placeholder="اللينك هيظهر هنا"><button class="btn" onclick="copyClientLink()">Copy</button><button class="btn primary" onclick="createLink()">إنشاء اللينك</button><button class="btn primary" onclick="sendWhatsApp()">WhatsApp</button></div>
+      <div class="note">العميل هيدخل من اللينك ويشوف الدايت والتمرين ويسجل وزنه والمياه وأوزان الجيم.</div>
+    </div>
+  </div>
+</section>
+
+<section id="diet" class="page">
+  <div class="section"><div><span class="eyebrow">NUTRITION PLAN</span><h2>شيت الدايت</h2></div><button class="btn primary" onclick="addMeal()">+ حفظ الوجبة</button></div>
+  <div class="form">
+    <div class="formgrid three">
+      <input id="mealName" placeholder="اسم الوجبة — Breakfast">
+      <input id="mealFood" placeholder="الأكل والكميات">
+      <input id="mealCal" type="number" placeholder="Calories">
+      <input id="mealP" placeholder="Protein g">
+      <input id="mealC" placeholder="Carbs g">
+      <input id="mealF" placeholder="Fat g">
+    </div>
+    <div class="actions"><button class="btn primary" onclick="addMeal()">حفظ الوجبة ✓</button><span class="muted">بعد الحفظ هتظهر الوجبة تحت.</span></div>
+  </div>
+  <div id="mealList" style="margin-top:13px"></div>
+</section>
+
+<section id="training" class="page">
+  <div class="section">
+    <div><span class="eyebrow">TRAINING PLAN</span><h2>شيت التمرين — 5 أيام × 7 تمارين</h2></div>
+    <button class="btn primary" onclick="addTrainingDay()">+ إضافة يوم</button>
+  </div>
+  <div class="note">كل يوم فيه 7 تمارين. اكتب اسم التمرين، الـSets، الـReps، والـRest. البيانات بتتحفظ، والعميل يشوف الشيت من اللينك ويسجل الوزن اللي لعب بيه كل تمرين.</div>
+  <div id="trainingList" style="margin-top:13px"></div>
+</section>
+
+<section id="report" class="page">
+  <div class="section"><div><span class="eyebrow">CLIENT REPORT</span><h2>متابعة تسجيلات العميل</h2></div><button class="btn" onclick="renderReport()">تحديث ↻</button></div>
+  <div class="cards">
+    <div class="card stat"><span class="muted">المياه</span><b id="reportWater">0/8</b><span class="muted">today</span></div>
+    <div class="card stat"><span class="muted">تسجيلات الوزن</span><b id="reportWeights">0</b><span class="muted">entries</span></div>
+    <div class="card stat"><span class="muted">أوزان الجيم</span><b id="reportGym">0</b><span class="muted">entries</span></div>
+    <div class="card stat"><span class="muted">آخر وزن</span><b id="reportLastWeight">--</b><span class="muted">kg</span></div>
+  </div>
+  <div class="section"><h2>سجل الوزن</h2></div>
+  <div class="card"><table class="table"><thead><tr><th>الأسبوع</th><th>الوزن</th><th>التاريخ</th><th>ملاحظة</th></tr></thead><tbody id="weightRows"></tbody></table></div>
+  <div class="section"><h2>أوزان الجيم</h2></div><div id="gymRows"></div>
+</section>
+</main>
+</div>
+
+<div class="mobile">
+<button data-page="home" class="active"><i>⌂</i>الرئيسية</button>
+<button data-page="client"><i>♙</i>العميل</button>
+<button data-page="diet"><i>◈</i>الدايت</button>
+<button data-page="training"><i>⚡</i>التمرين</button>
+<button data-page="report"><i>↗</i>التقدم</button>
+</div>
+
+<script>
+const APP_KEY="AHMED_COACHING_READY_1";
+let state=loadState();
+
+function loadState(){
+  try{return Object.assign({client:null,meals:[],days:[]},JSON.parse(localStorage.getItem(APP_KEY)||"{}"))}
+  catch(e){return{client:null,meals:[],days:[]}}
+}
+function persist(){localStorage.setItem(APP_KEY,JSON.stringify(state));renderAll()}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
+function showPage(id){
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===id));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+
+function saveClient(){
+  const name=document.getElementById("cName").value.trim();
+  if(!name){alert("اكتب اسم العميل الأول");showPage("client");return}
+  state.client={
+    name,
+    email:document.getElementById("cEmail").value.trim(),
+    age:document.getElementById("cAge").value,
+    height:document.getElementById("cHeight").value,
+    weight:document.getElementById("cWeight").value,
+    goal:document.getElementById("cGoal").value.trim()
+  };
+  persist();
+  document.getElementById("clientSaved").classList.remove("hidden");
+}
+function newClient(){
+  state.client=null;state.meals=[];state.days=[];persist();
+  ["cName","cEmail","cAge","cHeight","cWeight","cGoal"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("clientLink").value="";
+  document.getElementById("clientSaved").classList.add("hidden");
+}
+function fillClient(){
+  const c=state.client;
+  if(!c)return;
+  cName.value=c.name||"";cEmail.value=c.email||"";cAge.value=c.age||"";cHeight.value=c.height||"";cWeight.value=c.weight||"";cGoal.value=c.goal||"";
+}
+function createLink(){
+  if(!state.client){alert("احفظ بيانات العميل الأول");showPage("client");return}
+  const payload={client:state.client,meals:state.meals,days:state.days};
+  const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  document.getElementById("clientLink").value=location.href.split("#")[0]+"#client="+encoded;
+}
+function copyClientLink(){
+  const el=document.getElementById("clientLink");
+  if(!el.value)createLink();
+  navigator.clipboard?.writeText(el.value).then(()=>alert("تم نسخ اللينك ✓")).catch(()=>{el.select();document.execCommand("copy");alert("تم نسخ اللينك ✓")});
+}
+function sendWhatsApp(){
+  if(!document.getElementById("clientLink").value)createLink();
+  window.open("https://wa.me/?text="+encodeURIComponent("ده لينك المتابعة الخاص بيك من Ahmed Coaching:\n"+document.getElementById("clientLink").value),"_blank");
+}
+
+function addMeal(){
+  const n=mealName.value.trim();
+  if(!n){alert("اكتب اسم الوجبة");mealName.focus();return}
+  state.meals.push({name:n,food:mealFood.value.trim(),cal:mealCal.value,p:mealP.value,c:mealC.value,f:mealF.value});
+  ["mealName","mealFood","mealCal","mealP","mealC","mealF"].forEach(id=>document.getElementById(id).value="");
+  persist();
+}
+function deleteMeal(i){state.meals.splice(i,1);persist()}
+function renderMeals(){
+  dashMeals.textContent=state.meals.length;
+  mealList.innerHTML=state.meals.length?state.meals.map((m,i)=>`
+  <div class="meal"><div><h3>${esc(m.name)}</h3><div class="muted">${esc(m.food||"لم تتم إضافة تفاصيل")}</div>
+  <span class="tag">${esc(m.cal||"--")} kcal</span><span class="tag">P ${esc(m.p||"--")}g</span><span class="tag">C ${esc(m.c||"--")}g</span><span class="tag">F ${esc(m.f||"--")}g</span></div>
+  <button class="btn danger" onclick="deleteMeal(${i})">حذف</button></div>`).join(""):'<div class="card empty">لسه مفيش وجبات. أضف الوجبات اللي عايز تبعتها للعميل.</div>';
+}
+
+function blankExercise(){
+  return {name:"",sets:"3",reps:"10",rest:"90"};
+}
+function addTrainingDay(){
+  if(state.days.length>=5){alert("عندك بالفعل 5 أيام — عدّل الأيام الموجودة بدل إضافة يوم سادس.");return}
+  state.days.push({name:"Day "+(state.days.length+1),exercises:Array.from({length:7},blankExercise)});
+  persist();
+}
+function updateDayName(dayIndex,value){
+  state.days[dayIndex].name=value;
+  persist();
+}
+function updateExercise(dayIndex,exIndex,field,value){
+  state.days[dayIndex].exercises[exIndex][field]=value;
+  localStorage.setItem(APP_KEY,JSON.stringify(state));
+}
+function saveTrainingDay(dayIndex){
+  const d=state.days[dayIndex];
+  if(!d.name.trim()){alert("اكتب اسم اليوم");return}
+  const missing=d.exercises.findIndex(x=>!x.name.trim());
+  if(missing!==-1){alert("اكتب اسم التمرين رقم "+(missing+1)+" قبل الحفظ.");return}
+  persist();
+  alert("تم حفظ يوم التدريب ✓");
+}
+function deleteTrainingDay(i){
+  if(confirm("حذف يوم التدريب ده؟")){
+    state.days.splice(i,1);
+    persist();
+  }
+}
+function renderTraining(){
+  dashDays.textContent=state.days.length;
+  trainingList.innerHTML=state.days.length?state.days.map((d,i)=>`
+    <div class="card day" style="margin-bottom:16px">
+      <div class="dayhead" style="margin-bottom:12px">
+        <div style="flex:1">
+          <span class="eyebrow">TRAINING DAY ${i+1}</span>
+          <input value="${esc(d.name)}" onchange="updateDayName(${i},this.value)" style="margin-top:7px;font-size:17px;font-weight:700">
+        </div>
+        <button class="btn danger" onclick="deleteTrainingDay(${i})">حذف اليوم</button>
+      </div>
+      <div style="overflow:auto">
+        <table class="table" style="min-width:760px">
+          <thead><tr>
+            <th style="width:34px">#</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>Client Weight</th>
+          </tr></thead>
+          <tbody>
+          ${d.exercises.map((x,j)=>`
+            <tr>
+              <td>${j+1}</td>
+              <td><input value="${esc(x.name)}" placeholder="اسم التمرين" onchange="updateExercise(${i},${j},'name',this.value)"></td>
+              <td><input value="${esc(x.sets)}" placeholder="3" onchange="updateExercise(${i},${j},'sets',this.value)" style="min-width:70px"></td>
+              <td><input value="${esc(x.reps)}" placeholder="10" onchange="updateExercise(${i},${j},'reps',this.value)" style="min-width:70px"></td>
+              <td><input value="${esc(x.rest)}" placeholder="90 sec" onchange="updateExercise(${i},${j},'rest',this.value)" style="min-width:85px"></td>
+              <td><span class="muted">العميل يسجله من اللينك</span></td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button class="btn primary" onclick="saveTrainingDay(${i})">حفظ يوم التدريب ✓</button>
+      </div>
+    </div>`).join(""):`<div class="card empty">اضغط «إضافة يوم» لإنشاء أول يوم. الموقع هيعمل 7 خانات تمارين تلقائيًا.</div>`;
+}
+function logKey(){
+  const c=state.client;
+  return "AHMED_CLIENT_LOGS_"+(c?.email||c?.name||"client");
+}
+function getLogs(){
+  try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(logKey())||"{}"))}
+  catch(e){return{weights:[],water:0,gym:[]}}
+}
+function renderReport(){
+  const l=getLogs();
+  reportWater.textContent=(l.water||0)+"/8";
+  reportWeights.textContent=l.weights.length;
+  reportGym.textContent=l.gym.length;
+  reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";
+  weightRows.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';
+  gymRows.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لا توجد أوزان جيم مسجلة.</div>';
+}
+function renderAll(){
+  fillClient();
+  const c=state.client;
+  dashName.textContent=c?.name||"--";
+  dashWeight.textContent=c?.weight||"--";
+  miniName.textContent=c?.name||"No Client";
+  miniGoal.textContent=c?.goal||"Coach Workspace";
+  renderMeals();renderTraining();renderReport();
+}
+renderAll();
+
+function decodePortal(){
+  const m=location.hash.match(/^#client=(.+)$/);
+  if(!m)return null;
+  try{return JSON.parse(decodeURIComponent(escape(atob(m[1]))))}
+  catch(e){return null}
+}
+function portal(){
+  const p=decodePortal();if(!p)return;
+  window.PORTAL=p;
+  document.body.innerHTML=`<main class="portal">
+  <div class="portal-top"><div class="brand"><div class="logo">A</div><div><b>AHMED COACHING</b><small>CLIENT PORTAL</small></div></div><div class="avatar">A</div></div>
+  <div class="card"><span class="eyebrow">YOUR COACHING PLAN</span><h1 style="margin:5px 0">${esc(p.client.name)} 👋</h1><div class="muted">${esc(p.client.goal||"Coaching")} • ${esc(p.client.weight||"--")} kg</div></div>
+  <div class="portal-tabs"><button class="btn active" data-tab="diet">الدايت</button><button class="btn" data-tab="training">التمرين</button><button class="btn" data-tab="weight">الوزن</button><button class="btn" data-tab="water">المياه</button><button class="btn" data-tab="gym">أوزان الجيم</button></div>
+  <div id="portalContent"></div></main>`;
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>portalTab(b.dataset.tab));
+  portalTab("diet");
+}
+function portalLogKey(){return "AHMED_PORTAL_LOGS_"+(window.PORTAL.client.email||window.PORTAL.client.name)}
+function portalLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(portalLogKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
+function savePortalLogs(l){localStorage.setItem(portalLogKey(),JSON.stringify(l))}
+function portalTab(tab){
+  document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  const p=window.PORTAL,l=portalLogs(),box=document.getElementById("portalContent");
+  if(tab==="diet"){
+    box.innerHTML=p.meals.length?p.meals.map(m=>`<div class="meal"><div><h3>${esc(m.name)}</h3><div class="muted">${esc(m.food||"")}</div><span class="tag">${esc(m.cal||"--")} kcal</span><span class="tag">P ${esc(m.p||"--")}g</span><span class="tag">C ${esc(m.c||"--")}g</span><span class="tag">F ${esc(m.f||"--")}g</span></div></div>`).join(""):'<div class="card empty">الكوتش لسه ما أضافش الدايت.</div>';
+  }
+  if(tab==="training"){
+    box.innerHTML=p.days.length?p.days.map((d,di)=>`
+      <div class="card day" style="margin-bottom:14px">
+        <span class="eyebrow">DAY ${di+1}</span><h2 style="margin:4px 0 12px">${esc(d.name)}</h2>
+        <div style="overflow:auto">
+          <table class="table" style="min-width:780px">
+            <thead><tr><th>#</th><th>التمرين</th><th>Sets</th><th>Reps</th><th>Rest</th><th>وزنك اليوم</th><th>Reps فعلية</th><th>حفظ</th></tr></thead>
+            <tbody>${d.exercises.map((x,ei)=>`
+              <tr>
+                <td>${ei+1}</td>
+                <td><strong>${esc(x.name||"Exercise")}</strong></td>
+                <td>${esc(x.sets)}</td>
+                <td>${esc(x.reps)}</td>
+                <td>${esc(x.rest||"90 sec")}</td>
+                <td><input id="gw_${di}_${ei}" type="number" step=".5" placeholder="kg"></td>
+                <td><input id="gr_${di}_${ei}" type="number" placeholder="reps"></td>
+                <td><button class="btn primary" onclick="saveExerciseLog(${di},${ei})">حفظ</button></td>
+              </tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </div>`).join(""):'<div class="card empty">الكوتش لسه ما أضافش التمرين.</div>';
+  }
+  if(tab==="weight"){
+    box.innerHTML=`<div class="form"><h2>تسجيل الوزن</h2><div class="formgrid three"><input id="pw" type="number" step=".1" placeholder="الوزن kg"><input id="pweek" type="number" min="1" placeholder="رقم الأسبوع"><input id="pnote" placeholder="ملاحظة"></div><div class="actions"><button class="btn primary" onclick="addPortalWeight()">حفظ الوزن ✓</button></div></div><div class="section"><h2>سجل الأوزان</h2></div><div class="card"><table class="table"><thead><tr><th>الأسبوع</th><th>الوزن</th><th>التاريخ</th><th>ملاحظة</th></tr></thead><tbody>${l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4">لا توجد تسجيلات.</td></tr>'}</tbody></table></div>`;
+  }
+  if(tab==="water"){
+    box.innerHTML=`<div class="card"><h2>المياه اليوم</h2><p class="muted">اضغط على عدد الأكواب اللي شربتها.</p><div id="portalWater" class="water"></div><div class="progress"><i id="portalWaterBar"></i></div><h3 id="portalWaterNum" class="green"></h3></div>`;
+    renderPortalWater();
+  }
+  if(tab==="gym"){
+    box.innerHTML=`<div class="form"><h2>تسجيل وزن التمرين</h2><div class="formgrid three"><input id="pgExercise" placeholder="اسم التمرين"><input id="pgWeight" type="number" step=".5" placeholder="الوزن kg"><input id="pgReps" type="number" placeholder="Reps"></div><div class="actions"><button class="btn primary" onclick="addPortalGym()">حفظ الوزن ✓</button></div></div><div class="section"><h2>سجل أوزان الجيم</h2></div>${l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لسه مفيش تسجيلات.</div>'}`;
+  }
+}
+function saveExerciseLog(dayIndex,exIndex){
+  const p=window.PORTAL,l=portalLogs(),x=p.days[dayIndex].exercises[exIndex];
+  const weight=document.getElementById(`gw_${dayIndex}_${exIndex}`).value;
+  const reps=document.getElementById(`gr_${dayIndex}_${exIndex}`).value;
+  if(!weight||!reps){alert("اكتب الوزن والـReps الأول");return}
+  l.gym.push({
+    exercise:x.name,
+    day:p.days[dayIndex].name,
+    weight,reps,
+    date:new Date().toLocaleDateString("ar-EG")
+  });
+  savePortalLogs(l);
+  alert("تم حفظ وزن التمرين ✓");
+}
+function addPortalWeight(){
+  const l=portalLogs();
+  if(!pw.value||!pweek.value){alert("اكتب الوزن ورقم الأسبوع");return}
+  l.weights.push({weight:pw.value,week:pweek.value,note:pnote.value,date:new Date().toLocaleDateString("ar-EG")});
+  savePortalLogs(l);portalTab("weight");
+}
+function renderPortalWater(){
+  const l=portalLogs(),box=document.getElementById("portalWater");if(!box)return;
+  box.innerHTML="";
+  for(let i=0;i<8;i++){const b=document.createElement("button");b.textContent="💧";b.className=i<l.water?"on":"";b.onclick=()=>{const n=portalLogs();n.water=i+1;savePortalLogs(n);renderPortalWater()};box.appendChild(b)}
+  document.getElementById("portalWaterNum").textContent=l.water+"/8 أكواب";
+  document.getElementById("portalWaterBar").style.width=(l.water/8*100)+"%";
+}
+function addPortalGym(){
+  const l=portalLogs();
+  if(!pgExercise.value||!pgWeight.value||!pgReps.value){alert("اكتب اسم التمرين والوزن والـReps");return}
+  l.gym.push({exercise:pgExercise.value,weight:pgWeight.value,reps:pgReps.value,date:new Date().toLocaleDateString("ar-EG")});
+  savePortalLogs(l);portalTab("gym");
+}
+if(location.hash.startsWith("#client="))portal();
+</script>
+</body>
+</html>
