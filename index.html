@@ -14,6 +14,20 @@
 button,input,textarea,select{font:inherit}button{cursor:pointer}.app{display:flex;min-height:100vh}.sidebar{width:255px;background:#0d1117;border-left:1px solid var(--line);padding:24px 16px;position:fixed;right:0;top:0;bottom:0;z-index:10}.brand{display:flex;align-items:center;gap:11px;margin:0 8px 28px}.logo{width:44px;height:44px;border-radius:13px;background:var(--accent);color:#0b0e08;display:grid;place-items:center;font:800 23px Inter}.brand b{display:block;font:800 17px Inter;letter-spacing:.8px}.brand small{color:var(--muted);font:700 10px Inter;letter-spacing:2px}.profile-mini{padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-bottom:22px}.profile-mini strong{display:block}.profile-mini span{font-size:12px;color:var(--muted)}nav button{width:100%;background:none;border:0;color:#aab2be;text-align:right;padding:12px 13px;border-radius:12px;margin:3px 0;display:flex;gap:10px;align-items:center}nav button:hover,nav button.active{background:#1a212b;color:#fff}nav button.active{box-shadow:inset -3px 0 var(--accent)}nav i{font-style:normal;width:24px;text-align:center}.side-foot{position:absolute;bottom:20px;right:16px;left:16px;color:var(--muted);font-size:11px}.main{margin-right:255px;width:calc(100% - 255px);padding:28px 34px 50px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}.eyebrow{color:var(--accent);font:800 10px Inter;letter-spacing:1.8px}.topbar h1{margin:5px 0 0;font-size:28px}.avatar{width:44px;height:44px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-weight:800}.page{display:none}.page.active{display:block}.hero{background:linear-gradient(110deg,#141b13,#121821 65%);border:1px solid #2b3820;border-radius:24px;padding:30px;display:flex;justify-content:space-between;overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px}.hero h2{font-size:34px;line-height:1.2;margin:8px 0}.hero h2 em{color:var(--accent);font-style:normal}.hero p{color:#aeb7c3;max-width:580px}.hero-badges{display:flex;gap:8px;flex-wrap:wrap}.badge{background:#ffffff0a;border:1px solid #ffffff12;padding:7px 12px;border-radius:30px;font-size:12px}.hero-mark{font:800 100px Inter;color:#ffffff08;align-self:center}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:18px}.stat b{display:block;font:800 27px Inter;margin:6px 0}.muted{color:var(--muted);font-size:12px}.section-head{display:flex;justify-content:space-between;align-items:end;margin:28px 0 14px}.section-head h2{margin:0;font-size:20px}.grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:16px}.meal,.exercise,.check{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px;margin-bottom:10px}.meal{display:grid;grid-template-columns:1fr auto;gap:10px}.meal h3,.exercise h3{margin:0 0 4px;font-size:16px}.macros{display:flex;gap:7px;flex-wrap:wrap}.macro{font-size:11px;padding:5px 8px;border-radius:8px;background:#ffffff08;color:#bbc4cf}.green{color:var(--accent)}.progressbar{height:8px;background:#242b35;border-radius:10px;overflow:hidden;margin-top:10px}.progressbar i{display:block;height:100%;background:var(--accent);border-radius:10px}.water{display:grid;grid-template-columns:repeat(8,1fr);gap:7px;margin-top:14px}.water button{height:40px;border:1px solid var(--line);border-radius:9px;background:#151b24;color:#8993a1}.water button.on{background:var(--accent);color:#0b0e08;border-color:var(--accent)}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:13px 10px;border-bottom:1px solid var(--line);text-align:right}.table th{color:var(--muted);font-size:11px}.check textarea{width:100%;background:#0c1016;border:1px solid var(--line);color:#fff;border-radius:12px;padding:12px;min-height:90px;resize:vertical}.btn{border:1px solid var(--line);background:#171e27;color:#fff;padding:10px 15px;border-radius:11px}.btn.primary{background:var(--accent);border-color:var(--accent);color:#0a0d08;font-weight:800}.notice{padding:15px 17px;background:#151c13;border:1px solid #30421a;border-radius:14px;color:#dbe9c1}.empty{padding:35px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:16px}.mobile-head{display:none}
 @media(max-width:900px){.sidebar{display:none}.main{margin:0;width:100%;padding:20px 15px 80px}.mobile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.hero{padding:22px}.hero-mark{display:none}.hero h2{font-size:27px}.water{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:480px){.cards{grid-template-columns:1fr 1fr}.card{padding:14px}.topbar{display:none}.hero p{font-size:13px}.table{font-size:12px}}
+
+/* interaction + polish */
+button,a,input,textarea,select{pointer-events:auto}
+.btn,.water button,nav button{transition:.18s ease;position:relative;z-index:2}
+.btn:hover{transform:translateY(-1px);border-color:#394454}
+.btn.primary:hover{background:#d5ff68;box-shadow:0 8px 25px #c7ff3d22}
+.client-link{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.client-link input{flex:1;min-width:220px;background:#0b1016;color:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+.form-grid input,.form-grid textarea{width:100%;background:#0b1016;color:#fff;border:1px solid var(--line);border-radius:10px;padding:11px;outline:none}
+.form-grid input:focus,.form-grid textarea:focus{border-color:var(--accent)}
+.client-panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:16px}
+.small-note{font-size:11px;color:var(--muted);line-height:1.8}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}.client-link input{min-width:100%}}
 </style>
 </head>
 <body>
@@ -23,7 +37,7 @@ button,input,textarea,select{font:inherit}button{cursor:pointer}.app{display:fle
   <div class="profile-mini"><strong id="sideName">Client</strong><span id="sideGoal">Your coaching plan</span></div>
   <nav>
     <button class="active" data-page="home"><i>⌂</i> الرئيسية</button>
-    <button data-page="diet"><i>◈</i> النظام الغذائي</button>
+    <button data-page="clients"><i>♙</i> العملاء</button><button data-page="diet"><i>◈</i> النظام الغذائي</button>
     <button data-page="training"><i>⚡</i> التمرين</button>
     <button data-page="progress"><i>↗</i> التقدم</button>
     <button data-page="checkin"><i>✓</i> المتابعة الأسبوعية</button>
@@ -54,6 +68,40 @@ button,input,textarea,select{font:inherit}button{cursor:pointer}.app{display:fle
 <div class="card"><h3>المياه اليوم</h3><span class="muted">اضغط مع كل كوب تشربه</span><div class="water" id="waterHome"></div><div class="progressbar"><i id="waterBar" style="width:0%"></i></div></div></div>
 </section>
 
+
+<section id="clients" class="page">
+<div class="section-head">
+  <div><span class="eyebrow">COACH CONTROL</span><h2>إدارة العملاء</h2></div>
+  <button class="btn primary" onclick="addClient()">+ إضافة عميل</button>
+</div>
+<div class="client-panel">
+  <h3 style="margin-top:0">بيانات العميل</h3>
+  <div class="form-grid">
+    <input id="cName" placeholder="اسم العميل">
+    <input id="cEmail" type="email" placeholder="Email العميل">
+    <input id="cWeight" type="number" step=".1" placeholder="الوزن الحالي">
+    <input id="cGoal" placeholder="الهدف">
+  </div>
+  <p class="small-note">بعد حفظ البيانات هتقدر تنشئ لينك خاص بالعميل. اللينك ده يفتح له صفحة المتابعة فقط.</p>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn primary" onclick="saveClient()">حفظ العميل</button>
+    <button class="btn" onclick="generateClientLink()">إنشاء لينك العميل</button>
+  </div>
+  <div id="linkBox" style="display:none;margin-top:14px">
+    <div class="eyebrow">CLIENT TRACKING LINK</div>
+    <div class="client-link">
+      <input id="clientLink" readonly>
+      <button class="btn" onclick="copyClientLink()">Copy</button>
+      <button class="btn primary" onclick="whatsappClient()">WhatsApp</button>
+    </div>
+    <p class="small-note">ابعت اللينك للعميل بعد ما تخلص له الدايت والتمرين. بيانات الوزن والمتابعة بتتخزن على نفس الجهاز/المتصفح في النسخة الحالية.</p>
+  </div>
+</div>
+<div class="client-panel">
+  <h3 style="margin-top:0">العميل الحالي</h3>
+  <div id="clientSummary" class="empty">لسه مفيش عميل محفوظ.</div>
+</div>
+</section>
 <section id="diet" class="page">
 <div class="section-head"><div><span class="eyebrow">NUTRITION PLAN</span><h2>النظام الغذائي — 30 يوم</h2></div><span class="badge">2400 kcal</span></div>
 <div class="cards">
@@ -85,6 +133,8 @@ button,input,textarea,select{font:inherit}button{cursor:pointer}.app{display:fle
 </div>
 
 <script>
+const IS_PORTAL=location.hash.startsWith("#client="); if(IS_PORTAL) clientPortal();
+
 const meals=[
 ["Breakfast","وجبة الإفطار","Protein • Carbs • Fat"],
 ["Lunch","وجبة الغداء","Protein • Carbs • Fat"],
@@ -95,13 +145,105 @@ const days=["Day 1 — Chest & Triceps","Day 2 — Back & Biceps","Day 3 — Leg
 const exercises=["Exercise 1","Exercise 2","Exercise 3","Exercise 4","Exercise 5","Exercise 6","Exercise 7"];
 let water=Number(localStorage.getItem("ahmed_water")||0);
 
+
+const CLIENT_KEY="ahmed_client";
+function getClient(){try{return JSON.parse(localStorage.getItem(CLIENT_KEY)||"null")}catch(e){return null}}
+function saveClient(){
+ const name=document.getElementById("cName").value.trim();
+ if(!name){alert("اكتب اسم العميل الأول");return}
+ const c={name,email:document.getElementById("cEmail").value.trim(),weight:document.getElementById("cWeight").value,goal:document.getElementById("cGoal").value.trim(),created:Date.now()};
+ localStorage.setItem(CLIENT_KEY,JSON.stringify(c));
+ localStorage.setItem("ahmed_client_name",c.name);
+ localStorage.setItem("ahmed_client_weight",c.weight);
+ localStorage.setItem("ahmed_client_goal",c.goal);
+ renderClientSummary();syncHeader();alert("تم حفظ العميل ✓");
+}
+function addClient(){
+ ["cName","cEmail","cWeight","cGoal"].forEach(id=>document.getElementById(id).value="");
+ document.getElementById("linkBox").style.display="none";
+ showPage("clients");
+}
+function renderClientSummary(){
+ const c=getClient(), box=document.getElementById("clientSummary");
+ if(!c){box.className="empty";box.textContent="لسه مفيش عميل محفوظ.";return}
+ box.className="";
+ box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap">
+ <div><strong style="font-size:18px">${esc(c.name)}</strong><div class="muted">${esc(c.email||"بدون Email")} • ${esc(c.goal||"بدون هدف")}</div></div>
+ <div><strong>${esc(c.weight||"--")} kg</strong><div class="muted">الوزن الحالي</div></div></div>`;
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function syncHeader(){
+ const c=getClient();const name=c?.name||"العميل";const w=c?.weight||"--";const g=c?.goal||"Your coaching plan";
+ if(!IS_PORTAL) document.getElementById("topName").textContent=name;
+ if(!IS_PORTAL) document.getElementById("sideName").textContent=name;
+ if(!IS_PORTAL) document.getElementById("weightStat").textContent=w;
+ if(!IS_PORTAL) document.getElementById("sideGoal").textContent=g;
+}
+function generateClientLink(){
+ const c=getClient(); if(!c){alert("احفظ العميل الأول");return}
+ const payload={client:c,site:location.origin+location.pathname,created:Date.now()};
+ const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+ const link=location.href.split("#")[0]+"#client="+encoded;
+ document.getElementById("clientLink").value=link;
+ document.getElementById("linkBox").style.display="block";
+ localStorage.setItem("ahmed_client_link",link);
+}
+async function copyClientLink(){
+ const v=document.getElementById("clientLink").value;
+ try{await navigator.clipboard.writeText(v);alert("تم نسخ اللينك ✓")}catch(e){document.getElementById("clientLink").select();document.execCommand("copy");alert("تم نسخ اللينك ✓")}
+}
+function whatsappClient(){
+ const v=document.getElementById("clientLink").value;if(!v)return;
+ window.open("https://wa.me/?text="+encodeURIComponent("ده لينك متابعة الدايت والتقدم الخاص بيك:\n"+v),"_blank");
+}
+function decodeClient(){
+ const m=location.hash.match(/#client=([^&]+)/); if(!m)return null;
+ try{return JSON.parse(decodeURIComponent(escape(atob(m[1]))))}catch(e){return null}
+}
+function clientPortal(){
+ const data=decodeClient(); if(!data)return false;
+ const c=data.client||{};
+ document.body.innerHTML=`<main style="max-width:1000px;margin:auto;padding:22px;font-family:Cairo,Arial;color:#f6f7f9">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px">
+  <div><div style="color:#c7ff3d;font:800 10px Inter;letter-spacing:1.8px">AHMED COACHING • CLIENT PORTAL</div><h1 style="margin:5px 0">أهلاً ${esc(c.name||"بك")} 👋</h1><div style="color:#8f99a8">${esc(c.goal||"خطة المتابعة")}</div></div>
+  <div style="background:#c7ff3d;color:#0a0d08;border-radius:13px;padding:12px 16px;font-weight:800">CLIENT</div>
+ </div>
+ <section style="background:#11161e;border:1px solid #252d39;border-radius:18px;padding:20px;margin-bottom:15px">
+  <h2>تسجيل الوزن والتقدم</h2><p style="color:#8f99a8">سجل وزنك كل أسبوع عشان الكوتش يتابعه.</p>
+  <div class="form-grid"><input id="pWeight" type="number" step=".1" placeholder="وزنك اليوم بالكيلو"><input id="pWeek" type="number" min="1" max="30" placeholder="رقم الأسبوع"><textarea id="pNote" placeholder="ملاحظات الأسبوع"></textarea></div>
+  <button class="btn primary" style="margin-top:12px" onclick="savePortalProgress()">حفظ التقدم</button><p id="pMsg" style="color:#c7ff3d"></p>
+ </section>
+ <section style="background:#11161e;border:1px solid #252d39;border-radius:18px;padding:20px">
+  <h2>سجل الأوزان</h2><table class="table"><thead><tr><th>الأسبوع</th><th>الوزن</th><th>ملاحظات</th><th>التاريخ</th></tr></thead><tbody id="portalRows"></tbody></table>
+ </section>
+ </main>`;
+ renderPortalRows();
+ return true;
+}
+function savePortalProgress(){
+ const c=decodeClient()?.client||{};const key="portal_progress_"+(c.email||c.name||"client");
+ const arr=JSON.parse(localStorage.getItem(key)||"[]");
+ const w=document.getElementById("pWeight").value,week=document.getElementById("pWeek").value,note=document.getElementById("pNote").value;
+ if(!w||!week){document.getElementById("pMsg").textContent="اكتب الأسبوع والوزن.";return}
+ arr.push({week,weight:w,note,date:new Date().toLocaleDateString("ar-EG")});
+ localStorage.setItem(key,JSON.stringify(arr));
+ document.getElementById("pWeight").value="";document.getElementById("pNote").value="";
+ document.getElementById("pMsg").textContent="تم تسجيل الوزن ✓";renderPortalRows();
+}
+function renderPortalRows(){
+ const c=decodeClient()?.client||{};const key="portal_progress_"+(c.email||c.name||"client");
+ const arr=JSON.parse(localStorage.getItem(key)||"[]");
+ const rows=document.getElementById("portalRows"); if(!rows)return;
+ rows.innerHTML=arr.length?arr.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.note||"--")}</td><td>${esc(x.date)}</td></tr>`).join(""):`<tr><td colspan="4" style="color:#8f99a8">لسه مفيش تسجيلات.</td></tr>`;
+}
+
 function showPage(id){
  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
  document.getElementById(id).classList.add("active");
  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===id));
  window.scrollTo({top:0,behavior:"smooth"});
 }
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+if(!IS_PORTAL) document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 
 function renderMeals(){
  document.getElementById("meals").innerHTML=meals.map(m=>`<div class="meal"><div><h3>${m[0]}</h3><span class="muted">${m[1]}</span><div class="macros"><span class="macro">P حسب الخطة</span><span class="macro">C حسب الخطة</span><span class="macro">F حسب الخطة</span></div></div><b class="green">${m[2]}</b></div>`).join("");
@@ -122,9 +264,9 @@ document.getElementById("topName").textContent=localStorage.getItem("ahmed_clien
 document.getElementById("sideName").textContent=localStorage.getItem("ahmed_client_name")||"Client";
 document.getElementById("weightStat").textContent=localStorage.getItem("ahmed_client_weight")||"--";
 document.getElementById("sideGoal").textContent=localStorage.getItem("ahmed_client_goal")||"Your coaching plan";
-document.getElementById("checkText").value=localStorage.getItem("ahmed_checkin")||"";
-document.getElementById("weightRows").innerHTML="<tr><td>Week 1</td><td>--</td><td>--</td></tr><tr><td>Week 2</td><td>--</td><td>--</td></tr><tr><td>Week 3</td><td>--</td><td>--</td></tr>";
-renderMeals();renderTraining();renderWater();
+if(!IS_PORTAL) document.getElementById("checkText").value=localStorage.getItem("ahmed_checkin")||"";
+if(!IS_PORTAL) document.getElementById("weightRows").innerHTML="<tr><td>Week 1</td><td>--</td><td>--</td></tr><tr><td>Week 2</td><td>--</td><td>--</td></tr><tr><td>Week 3</td><td>--</td><td>--</td></tr>";
+if(!IS_PORTAL){renderMeals();renderTraining();renderWater();renderClientSummary();syncHeader();}
 </script>
 </body>
 </html>
