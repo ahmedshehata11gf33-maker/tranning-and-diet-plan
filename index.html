@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ahmed Coaching — Client System</title>
+<title>Ahmed Coaching — Final Client System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
@@ -84,7 +84,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
       <button class="btn" onclick="newClient()">+ عميل جديد</button>
       <button class="btn danger" onclick="deleteCurrentClient()">حذف العميل</button>
     </div>
-    <div id="clientSaved" class="saved hidden"><b>✓</b> تم حفظ بيانات العميل على الجهاز.</div><div id="syncStatus" class="syncbar">Live Sync: لم تبدأ المزامنة بعد</div><div class="actions"><button class="btn" onclick="syncNow()">مزامنة العملاء الآن ↻</button><button class="btn" onclick="restoreBackup()">استرجاع آخر نسخة احتياطية</button></div>
+    <div id="clientSaved" class="saved hidden"><b>✓</b> تم حفظ بيانات العميل على الجهاز.</div><div id="syncStatus" class="syncbar">Live Sync: اضغط «مزامنة العملاء الآن» لجلب البيانات ومزامنتها</div><div class="actions"><button class="btn" onclick="syncNow()">مزامنة العملاء الآن ↻</button><button class="btn" onclick="restoreBackup()">استرجاع آخر نسخة احتياطية</button></div>
     <div class="linkbox">
       <div class="eyebrow">CLIENT PORTAL LINK</div>
       <div class="muted">بعد ما تخلص الدايت والتمرين، اضغط إنشاء اللينك.</div>
@@ -120,7 +120,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
 </section>
 
 <section id="report" class="page">
-  <div class="section"><div><span class="eyebrow">CLIENT REPORT</span><h2>متابعة تسجيلات العميل</h2></div><button class="btn" onclick="renderReport()">تحديث ↻</button></div>
+  <div class="section"><div><span class="eyebrow">CLIENT REPORT</span><h2>متابعة تسجيلات العميل</h2></div><button class="btn" onclick="renderReport()">جلب آخر متابعة ↻</button></div>
   <div class="cards">
     <div class="card stat"><span class="muted">المياه</span><b id="reportWater">0/8</b><span class="muted">today</span></div>
     <div class="card stat"><span class="muted">تسجيلات الوزن</span><b id="reportWeights">0</b><span class="muted">entries</span></div>
@@ -234,40 +234,57 @@ async function testSupabaseConnection(){
   return await sbFetch("coach_clients_live?select=id&limit=1");
 }
 async function syncNow(){
-  if(syncBusy)return; syncBusy=true; setSync("Live Sync: جاري المزامنة…");
+  if(syncBusy)return;
+  syncBusy=true;
+  setSync("Live Sync: جاري جلب البيانات…");
   try{
     backupState("before-sync");
-    // Read remote first so we never overwrite client logs with an empty local copy.
+    // 1) Pull everything from Supabase first.
     const remote=await sbFetch("coach_clients_live?select=*&order=updated_at.desc");
     const rows=Array.isArray(remote)?remote:[];
+
+    // 2) Merge remote clients into the local workspace without deleting anything.
     for(const r of rows){
       let c=state.clients.find(x=>x.id===r.id);
       if(!c){
-        c=normalizeClient({id:r.id,name:r.name,email:r.email,age:r.age,height:r.height,weight:r.weight,goal:r.goal,meals:Array.isArray(r.meals)?r.meals:[],days:Array.isArray(r.days)?r.days:[]});
+        c=normalizeClient({id:r.id,name:r.name||"",email:r.email||"",age:r.age??"",height:r.height??"",weight:r.weight??"",goal:r.goal||"",meals:Array.isArray(r.meals)?r.meals:[],days:Array.isArray(r.days)?r.days:[]});
         state.clients.push(c);
       }else{
-        if(!c.name&&r.name)c.name=r.name;
-        if(!c.email&&r.email)c.email=r.email;
-        if(!c.age&&r.age)c.age=r.age;
-        if(!c.height&&r.height)c.height=r.height;
-        if(!c.weight&&r.weight)c.weight=r.weight;
-        if(!c.goal&&r.goal)c.goal=r.goal;
-        if(!c.meals?.length&&Array.isArray(r.meals)&&r.meals.length)c.meals=r.meals;
-        if(!c.days?.length&&Array.isArray(r.days)&&r.days.length)c.days=r.days;
+        // Remote data fills/refreshes the client when it exists there.
+        if(r.name)c.name=r.name;
+        if(r.email)c.email=r.email;
+        if(r.age!==null&&r.age!==undefined)c.age=r.age;
+        if(r.height!==null&&r.height!==undefined)c.height=r.height;
+        if(r.weight!==null&&r.weight!==undefined)c.weight=r.weight;
+        if(r.goal)c.goal=r.goal;
+        if(Array.isArray(r.meals)&&r.meals.length)c.meals=r.meals;
+        if(Array.isArray(r.days)&&r.days.length)c.days=r.days;
       }
-      if(r.logs)localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(mergeLogs(getLogsFor(c),r.logs)));
+      if(r.logs){
+        const merged=mergeLogs(getLogsFor(c),r.logs);
+        localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(merged));
+      }
     }
-    // Upload local clients, but preserve any logs already on the server.
+
+    // 3) Push local clients once, preserving remote logs and local logs together.
     for(const c of state.clients){
       const rr=rows.find(x=>x.id===c.id);
       const payload=clientForRemote(c,rr?.logs||null);
-      await sbFetch("coach_clients_live?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(payload)});
+      await sbFetch("coach_clients_live?on_conflict=id",{
+        method:"POST",
+        headers:{Prefer:"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify(payload)
+      });
       localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(payload.logs));
     }
+
     localStorage.setItem(APP_KEY,JSON.stringify(state));
-    renderAll(); setSync("Live Sync: متصل ✓ — آخر تحديث الآن", "ok");
-  }catch(e){console.error(e);setSync("Live Sync: فشل — "+e.message,"err");}
-  finally{syncBusy=false}
+    renderAll();
+    setSync("Live Sync: تمت المزامنة بنجاح ✓ — البيانات اتجابت واتحفظت", "ok");
+  }catch(e){
+    console.error("LIVE SYNC ERROR",e);
+    setSync("Live Sync: فشل — "+(e?.message||"خطأ غير معروف"),"err");
+  }finally{syncBusy=false}
 }
 
 function uid(){return "c_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7)}
@@ -341,11 +358,10 @@ async function renderReport(){
     ? l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join("")
     : '<div class="card empty">لا توجد أوزان جيم مسجلة.</div>';
 }
-function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining();renderReport()}
+function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining()}
 backupState("startup");
 renderAll();
-if(!location.hash.startsWith("#client=")) setTimeout(()=>syncNow(),300);
-setInterval(()=>{ if(!location.hash.startsWith("#client=") && currentClient()) syncNow(); },10000);
+
 function decodePortal(){
   const m=location.hash.match(/^#client=(.+)$/);
   if(!m)return null;
