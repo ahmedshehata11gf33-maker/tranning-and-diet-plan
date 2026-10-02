@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ahmed Coaching</title>
+<title>Ahmed Coaching — Client System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
@@ -127,7 +127,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
     <div class="card stat"><span class="muted">أوزان الجيم</span><b id="reportGym">0</b><span class="muted">entries</span></div>
     <div class="card stat"><span class="muted">آخر وزن</span><b id="reportLastWeight">--</b><span class="muted">kg</span></div>
   </div>
-  <div class="section"><h2>سجل الوزن</h2></div>
+  <div id="reportSync" class="muted" style="margin-top:8px">جاري تجهيز المتابعة...</div><div class="section"><h2>سجل الوزن</h2></div>
   <div class="card"><table class="table"><thead><tr><th>الأسبوع</th><th>الوزن</th><th>التاريخ</th><th>ملاحظة</th></tr></thead><tbody id="weightRows"></tbody></table></div>
   <div class="section"><h2>أوزان الجيم</h2></div><div id="gymRows"></div>
 </section>
@@ -142,6 +142,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
 <button data-page="report"><i>↗</i>التقدم</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const APP_KEY="AHMED_COACHING_MULTI_1";
 const BACKUP_KEY="AHMED_COACHING_AUTO_BACKUP_1";
@@ -166,25 +167,55 @@ function restoreBackup(){
 }
 function setSync(msg,kind=""){const el=document.getElementById("syncStatus");if(el){el.textContent=msg;el.className="syncbar "+kind}}
 async function sbFetch(path,options={}){
-  const headers={
-    apikey:SUPABASE_KEY,
-    Authorization:"Bearer "+SUPABASE_KEY,
-    "Content-Type":"application/json",
-    Accept:"application/json",
-    ...(options.headers||{})
-  };
-  // Always keep both headers. Supabase REST accepts the publishable key in the
-  // apikey header and uses the same key as the bearer token for API auth.
-  headers.apikey=SUPABASE_KEY;
-  headers.Authorization="Bearer "+SUPABASE_KEY;
-  let r;
+  const url=SUPABASE_URL+"/rest/v1/"+path;
+  // Prefer the official Supabase browser client. Keep a REST fallback for environments
+  // where the CDN is temporarily unavailable. Neither path changes local data on failure.
   try{
-    r=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...options,mode:"cors",headers});
-  }catch(e){throw new Error("تعذر الاتصال بـ Supabase: "+(e?.message||"Failed to fetch")+" — تأكد أن Project URL وPublishable Key صحيحين")}
-  const text=await r.text();
-  if(!r.ok) throw new Error("HTTP "+r.status+" — "+(text||"Supabase rejected the request"));
-  try{return text?JSON.parse(text):null}catch(e){return null}
+    if(window.supabase && typeof window.supabase.createClient === "function"){
+      window.__sbClient=window.__sbClient||window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+      const method=(options.method||"GET").toUpperCase();
+      let q=window.__sbClient.from("coach_clients_live");
+      if(method==="GET"){
+        const m=path.match(/^coach_clients_live\?(.+)$/);
+        let query=m?new URLSearchParams(m[1]):new URLSearchParams();
+        q=q.select(query.get("select")||"*");
+        for(const [key,value] of query.entries()){
+          if(key==="select"||key==="limit"||key==="order") continue;
+          if(value.startsWith("eq.")) q=q.eq(key,value.slice(3));
+          else if(value.startsWith("neq.")) q=q.neq(key,value.slice(4));
+          else if(value.startsWith("gte.")) q=q.gte(key,value.slice(4));
+          else if(value.startsWith("lte.")) q=q.lte(key,value.slice(4));
+        }
+        if(query.has("limit"))q=q.limit(Number(query.get("limit")));
+        if(query.has("order")){const [col,dir]=query.get("order").split(".");q=q.order(col,{ascending:dir!=="desc"});}
+        const {data,error}=await q; if(error)throw new Error(error.message); return data;
+      }
+      if(method==="POST"){
+        const body=options.body?JSON.parse(options.body):{};
+        const {data,error}=await q.upsert(body,{onConflict:"id",ignoreDuplicates:false}).select();
+        if(error)throw new Error(error.message); return data;
+      }
+      if(method==="PATCH"){
+        const body=options.body?JSON.parse(options.body):{};
+        const id=(new URLSearchParams(path.split("?")[1]||"")).get("id");
+        if(id){const idValue=decodeURIComponent(id).replace(/^eq\./,""); const {data,error}=await q.update(body).eq("id",idValue).select(); if(error)throw new Error(error.message); return data;}
+      }
+    }
+  }catch(e){
+    // Fall through to REST only for transport/CDN problems; preserve useful server errors.
+    if(e && e.message && !/Failed to fetch|NetworkError|Load failed/i.test(e.message)) throw new Error("Supabase: "+e.message);
+  }
+  const headers={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",Accept:"application/json",...(options.headers||{})};
+  try{
+    const r=await fetch(url,{...options,mode:"cors",headers});
+    const text=await r.text();
+    if(!r.ok)throw new Error("HTTP "+r.status+" — "+(text||"Supabase rejected the request"));
+    try{return text?JSON.parse(text):null}catch(_){return null}
+  }catch(e){
+    throw new Error("تعذر الاتصال بـ Supabase. راجع اتصال الإنترنت أو إعدادات Supabase. التفاصيل: "+(e?.message||"Failed to fetch"));
+  }
 }
+
 function emptyLogs(){return {weights:[],water:0,gym:[]}}
 function mergeLogs(a,b){
   const A=Object.assign(emptyLogs(),a||{}), B=Object.assign(emptyLogs(),b||{});
@@ -249,7 +280,17 @@ function showPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 function selectClient(id){state.activeId=id;persist();showPage("client")}
 function newClient(){state.activeId=null;["cName","cEmail","cAge","cHeight","cWeight","cGoal"].forEach(id=>document.getElementById(id).value="");document.getElementById("clientLink").value="";document.getElementById("clientSaved").classList.add("hidden");showPage("client");renderAll()}
-function saveClient(){const name=cName.value.trim();if(!name){alert("اكتب اسم العميل الأول");return}let c=currentClient();if(!c){c=normalizeClient({});state.clients.unshift(c);state.activeId=c.id}c.name=name;c.email=cEmail.value.trim();c.age=cAge.value;c.height=cHeight.value;c.weight=cWeight.value;c.goal=cGoal.value.trim();persist();document.getElementById("clientSaved").classList.remove("hidden")}
+async function saveClient(){
+  const name=cName.value.trim();
+  if(!name){alert("اكتب اسم العميل الأول");return}
+  let c=currentClient();
+  if(!c){c=normalizeClient({});state.clients.unshift(c);state.activeId=c.id}
+  c.name=name;c.email=cEmail.value.trim();c.age=cAge.value;c.height=cHeight.value;c.weight=cWeight.value;c.goal=cGoal.value.trim();
+  persist();
+  backupState("client-save");
+  document.getElementById("clientSaved").classList.remove("hidden");
+  await syncNow();
+}
 function deleteCurrentClient(){const c=currentClient();if(!c)return;if(!confirm("تحذف العميل "+c.name+" بكل بياناته؟"))return;state.clients=state.clients.filter(x=>x.id!==c.id);state.activeId=state.clients[0]?.id||null;persist();showPage("home")}
 function fillClient(){const c=currentClient(),ids=["cName","cEmail","cAge","cHeight","cWeight","cGoal"];if(!c){ids.forEach(id=>document.getElementById(id).value="");return}cName.value=c.name||"";cEmail.value=c.email||"";cAge.value=c.age||"";cHeight.value=c.height||"";cWeight.value=c.weight||"";cGoal.value=c.goal||""}
 function renderClientList(){const box=document.getElementById("clientList");if(!box)return;box.innerHTML=state.clients.length?state.clients.map(c=>`<div class="card" style="cursor:pointer" onclick="selectClient('${c.id}')"><div style="display:flex;justify-content:space-between;gap:12px"><div><span class="eyebrow">CLIENT</span><h3 style="margin:5px 0">${esc(c.name||"بدون اسم")}</h3><div class="muted">${esc(c.goal||"بدون هدف")} • ${esc(c.weight||"--")} kg</div></div><span class="tag">${c.id===state.activeId?"مفتوح":"فتح"}</span></div><div class="muted" style="margin-top:10px">Diet ${c.meals.length} • Training ${c.days.length}/5</div><div class="actions"><button class="btn primary" onclick="event.stopPropagation();selectClient('${c.id}')">متابعة العميل</button><button class="btn" onclick="event.stopPropagation();generateLinkFor('${c.id}')">لينك العميل</button></div></div>`).join(""):'<div class="card empty" style="grid-column:1/-1">لسه مفيش عملاء. اضغط «إضافة عميل» وابدأ أول ملف.</div>'}
@@ -276,10 +317,29 @@ async function renderReport(){
   if(c?.id){
     try{
       const remote=await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(c.id)+"&select=logs");
-      if(remote?.[0]?.logs){l=Object.assign({weights:[],water:0,gym:[]},remote[0].logs);localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(l));}
-    }catch(e){console.warn("report remote",e)}
+      if(remote?.[0]?.logs){
+        l=mergeLogs(l,remote[0].logs);
+        localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(l));
+      }
+      const stamp=document.getElementById("reportSync");
+      if(stamp){stamp.textContent="آخر قراءة للمتابعة: الآن ✓";stamp.className="saved";}
+    }catch(e){
+      console.warn("report remote",e);
+      const stamp=document.getElementById("reportSync");
+      if(stamp){stamp.textContent="المتابعة المعروضة من آخر بيانات محفوظة على الجهاز";stamp.className="muted";}
+    }
   }
-  reportWater.textContent=(l.water||0)+"/8";reportWeights.textContent=l.weights.length;reportGym.textContent=l.gym.length;reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";weightRows.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';gymRows.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لا توجد أوزان جيم مسجلة.</div>'
+  l=Object.assign({weights:[],water:0,gym:[]},l||{});
+  reportWater.textContent=(l.water||0)+"/8";
+  reportWeights.textContent=l.weights.length;
+  reportGym.textContent=l.gym.length;
+  reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";
+  weightRows.innerHTML=l.weights.length
+    ? l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join("")
+    : '<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';
+  gymRows.innerHTML=l.gym.length
+    ? l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join("")
+    : '<div class="card empty">لا توجد أوزان جيم مسجلة.</div>';
 }
 function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining();renderReport()}
 backupState("startup");
@@ -302,6 +362,19 @@ function portal(){
   <div id="portalContent"></div></main>`;
   document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>portalTab(b.dataset.tab));
   portalTab("diet");
+  loadPortalRemoteLogs();
+}
+async function loadPortalRemoteLogs(){
+  const id=window.PORTAL?.client?.id;
+  if(!id)return;
+  try{
+    const remote=await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(id)+"&select=logs");
+    if(remote?.[0]?.logs){
+      const merged=mergeLogs(portalLogs(),remote[0].logs);
+      localStorage.setItem(portalLogKey(),JSON.stringify(merged));
+      portalTab(document.querySelector(".portal-tabs .active")?.dataset.tab||"diet");
+    }
+  }catch(e){console.warn("portal remote logs",e)}
 }
 function portalLogKey(){return "AHMED_CLIENT_LOGS_"+(window.PORTAL.client.id||window.PORTAL.client.email||window.PORTAL.client.name)}
 function portalLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(portalLogKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
