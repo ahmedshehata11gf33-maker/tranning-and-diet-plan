@@ -56,6 +56,8 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
     <div class="card stat"><span class="muted">الوجبات</span><b id="dashMeals">0</b><span class="muted">في الدايت</span></div>
     <div class="card stat"><span class="muted">أيام التدريب</span><b id="dashDays">0</b><span class="muted">days</span></div>
   </div>
+  <div class="section"><div><span class="eyebrow">CLIENTS</span><h2>كل العملاء</h2></div><button class="btn primary" onclick="newClient()">+ إضافة عميل</button></div>
+  <div id="clientList" class="cards"></div>
   <div class="section"><h2>الخطوات</h2></div>
   <div class="cards">
     <button class="card btn" onclick="showPage('client')">① بيانات العميل</button>
@@ -78,7 +80,8 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
     </div>
     <div class="actions">
       <button class="btn primary" onclick="saveClient()">حفظ بيانات العميل ✓</button>
-      <button class="btn" onclick="newClient()">عميل جديد</button>
+      <button class="btn" onclick="newClient()">+ عميل جديد</button>
+      <button class="btn danger" onclick="deleteCurrentClient()">حذف العميل</button>
     </div>
     <div id="clientSaved" class="saved hidden"><b>✓</b> تم حفظ بيانات العميل على الجهاز.</div>
     <div class="linkbox">
@@ -139,173 +142,43 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
 </div>
 
 <script>
-const APP_KEY="AHMED_COACHING_READY_1";
+const APP_KEY="AHMED_COACHING_MULTI_1";
 let state=loadState();
-
-function loadState(){
-  try{return Object.assign({client:null,meals:[],days:[]},JSON.parse(localStorage.getItem(APP_KEY)||"{}"))}
-  catch(e){return{client:null,meals:[],days:[]}}
-}
+function uid(){return "c_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7)}
+function normalizeClient(c){return Object.assign({id:uid(),name:"",email:"",age:"",height:"",weight:"",goal:"",meals:[],days:[]},c,{meals:Array.isArray(c.meals)?c.meals:[],days:Array.isArray(c.days)?c.days:[]})}
+function loadState(){try{const r=JSON.parse(localStorage.getItem(APP_KEY)||"null");if(r&&Array.isArray(r.clients))return Object.assign({clients:[],activeId:null},r);const o=JSON.parse(localStorage.getItem("AHMED_COACHING_READY_1")||"null");if(o&&o.client){const c=normalizeClient(Object.assign({},o.client,{meals:o.meals||[],days:o.days||[]}));const n={clients:[c],activeId:c.id};localStorage.setItem(APP_KEY,JSON.stringify(n));return n}}catch(e){}return{clients:[],activeId:null}}
+function currentClient(){return state.clients.find(c=>c.id===state.activeId)||null}
 function persist(){localStorage.setItem(APP_KEY,JSON.stringify(state));renderAll()}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-
-function showPage(id){
-  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===id));
-  window.scrollTo({top:0,behavior:"smooth"});
-}
+function showPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const p=document.getElementById(id);if(p)p.classList.add("active");document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===id));window.scrollTo({top:0,behavior:"smooth"})}
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
-
-function saveClient(){
-  const name=document.getElementById("cName").value.trim();
-  if(!name){alert("اكتب اسم العميل الأول");showPage("client");return}
-  state.client={
-    name,
-    email:document.getElementById("cEmail").value.trim(),
-    age:document.getElementById("cAge").value,
-    height:document.getElementById("cHeight").value,
-    weight:document.getElementById("cWeight").value,
-    goal:document.getElementById("cGoal").value.trim()
-  };
-  persist();
-  document.getElementById("clientSaved").classList.remove("hidden");
-}
-function newClient(){
-  state.client=null;state.meals=[];state.days=[];persist();
-  ["cName","cEmail","cAge","cHeight","cWeight","cGoal"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("clientLink").value="";
-  document.getElementById("clientSaved").classList.add("hidden");
-}
-function fillClient(){
-  const c=state.client;
-  if(!c)return;
-  cName.value=c.name||"";cEmail.value=c.email||"";cAge.value=c.age||"";cHeight.value=c.height||"";cWeight.value=c.weight||"";cGoal.value=c.goal||"";
-}
-function createLink(){
-  if(!state.client){alert("احفظ بيانات العميل الأول");showPage("client");return}
-  const payload={client:state.client,meals:state.meals,days:state.days};
-  const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  document.getElementById("clientLink").value=location.href.split("#")[0]+"#client="+encoded;
-}
-function copyClientLink(){
-  const el=document.getElementById("clientLink");
-  if(!el.value)createLink();
-  navigator.clipboard?.writeText(el.value).then(()=>alert("تم نسخ اللينك ✓")).catch(()=>{el.select();document.execCommand("copy");alert("تم نسخ اللينك ✓")});
-}
-function sendWhatsApp(){
-  if(!document.getElementById("clientLink").value)createLink();
-  window.open("https://wa.me/?text="+encodeURIComponent("ده لينك المتابعة الخاص بيك من Ahmed Coaching:\n"+document.getElementById("clientLink").value),"_blank");
-}
-
-function addMeal(){
-  const n=mealName.value.trim();
-  if(!n){alert("اكتب اسم الوجبة");mealName.focus();return}
-  state.meals.push({name:n,food:mealFood.value.trim(),cal:mealCal.value,p:mealP.value,c:mealC.value,f:mealF.value});
-  ["mealName","mealFood","mealCal","mealP","mealC","mealF"].forEach(id=>document.getElementById(id).value="");
-  persist();
-}
-function deleteMeal(i){state.meals.splice(i,1);persist()}
-function renderMeals(){
-  dashMeals.textContent=state.meals.length;
-  mealList.innerHTML=state.meals.length?state.meals.map((m,i)=>`
-  <div class="meal"><div><h3>${esc(m.name)}</h3><div class="muted">${esc(m.food||"لم تتم إضافة تفاصيل")}</div>
-  <span class="tag">${esc(m.cal||"--")} kcal</span><span class="tag">P ${esc(m.p||"--")}g</span><span class="tag">C ${esc(m.c||"--")}g</span><span class="tag">F ${esc(m.f||"--")}g</span></div>
-  <button class="btn danger" onclick="deleteMeal(${i})">حذف</button></div>`).join(""):'<div class="card empty">لسه مفيش وجبات. أضف الوجبات اللي عايز تبعتها للعميل.</div>';
-}
-
-function blankExercise(){
-  return {name:"",sets:"3",reps:"10",rest:"90"};
-}
-function addTrainingDay(){
-  if(state.days.length>=5){alert("عندك بالفعل 5 أيام — عدّل الأيام الموجودة بدل إضافة يوم سادس.");return}
-  state.days.push({name:"Day "+(state.days.length+1),exercises:Array.from({length:7},blankExercise)});
-  persist();
-}
-function updateDayName(dayIndex,value){
-  state.days[dayIndex].name=value;
-  persist();
-}
-function updateExercise(dayIndex,exIndex,field,value){
-  state.days[dayIndex].exercises[exIndex][field]=value;
-  localStorage.setItem(APP_KEY,JSON.stringify(state));
-}
-function saveTrainingDay(dayIndex){
-  const d=state.days[dayIndex];
-  if(!d.name.trim()){alert("اكتب اسم اليوم");return}
-  const missing=d.exercises.findIndex(x=>!x.name.trim());
-  if(missing!==-1){alert("اكتب اسم التمرين رقم "+(missing+1)+" قبل الحفظ.");return}
-  persist();
-  alert("تم حفظ يوم التدريب ✓");
-}
-function deleteTrainingDay(i){
-  if(confirm("حذف يوم التدريب ده؟")){
-    state.days.splice(i,1);
-    persist();
-  }
-}
-function renderTraining(){
-  dashDays.textContent=state.days.length;
-  trainingList.innerHTML=state.days.length?state.days.map((d,i)=>`
-    <div class="card day" style="margin-bottom:16px">
-      <div class="dayhead" style="margin-bottom:12px">
-        <div style="flex:1">
-          <span class="eyebrow">TRAINING DAY ${i+1}</span>
-          <input value="${esc(d.name)}" onchange="updateDayName(${i},this.value)" style="margin-top:7px;font-size:17px;font-weight:700">
-        </div>
-        <button class="btn danger" onclick="deleteTrainingDay(${i})">حذف اليوم</button>
-      </div>
-      <div style="overflow:auto">
-        <table class="table" style="min-width:760px">
-          <thead><tr>
-            <th style="width:34px">#</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>Client Weight</th>
-          </tr></thead>
-          <tbody>
-          ${d.exercises.map((x,j)=>`
-            <tr>
-              <td>${j+1}</td>
-              <td><input value="${esc(x.name)}" placeholder="اسم التمرين" onchange="updateExercise(${i},${j},'name',this.value)"></td>
-              <td><input value="${esc(x.sets)}" placeholder="3" onchange="updateExercise(${i},${j},'sets',this.value)" style="min-width:70px"></td>
-              <td><input value="${esc(x.reps)}" placeholder="10" onchange="updateExercise(${i},${j},'reps',this.value)" style="min-width:70px"></td>
-              <td><input value="${esc(x.rest)}" placeholder="90 sec" onchange="updateExercise(${i},${j},'rest',this.value)" style="min-width:85px"></td>
-              <td><span class="muted">العميل يسجله من اللينك</span></td>
-            </tr>`).join("")}
-          </tbody>
-        </table>
-      </div>
-      <div class="actions">
-        <button class="btn primary" onclick="saveTrainingDay(${i})">حفظ يوم التدريب ✓</button>
-      </div>
-    </div>`).join(""):`<div class="card empty">اضغط «إضافة يوم» لإنشاء أول يوم. الموقع هيعمل 7 خانات تمارين تلقائيًا.</div>`;
-}
-function logKey(){
-  const c=state.client;
-  return "AHMED_CLIENT_LOGS_"+(c?.email||c?.name||"client");
-}
-function getLogs(){
-  try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(logKey())||"{}"))}
-  catch(e){return{weights:[],water:0,gym:[]}}
-}
-function renderReport(){
-  const l=getLogs();
-  reportWater.textContent=(l.water||0)+"/8";
-  reportWeights.textContent=l.weights.length;
-  reportGym.textContent=l.gym.length;
-  reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";
-  weightRows.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';
-  gymRows.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لا توجد أوزان جيم مسجلة.</div>';
-}
-function renderAll(){
-  fillClient();
-  const c=state.client;
-  dashName.textContent=c?.name||"--";
-  dashWeight.textContent=c?.weight||"--";
-  miniName.textContent=c?.name||"No Client";
-  miniGoal.textContent=c?.goal||"Coach Workspace";
-  renderMeals();renderTraining();renderReport();
-}
+function selectClient(id){state.activeId=id;persist();showPage("client")}
+function newClient(){state.activeId=null;["cName","cEmail","cAge","cHeight","cWeight","cGoal"].forEach(id=>document.getElementById(id).value="");document.getElementById("clientLink").value="";document.getElementById("clientSaved").classList.add("hidden");showPage("client");renderAll()}
+function saveClient(){const name=cName.value.trim();if(!name){alert("اكتب اسم العميل الأول");return}let c=currentClient();if(!c){c=normalizeClient({});state.clients.unshift(c);state.activeId=c.id}c.name=name;c.email=cEmail.value.trim();c.age=cAge.value;c.height=cHeight.value;c.weight=cWeight.value;c.goal=cGoal.value.trim();persist();document.getElementById("clientSaved").classList.remove("hidden")}
+function deleteCurrentClient(){const c=currentClient();if(!c)return;if(!confirm("تحذف العميل "+c.name+" بكل بياناته؟"))return;state.clients=state.clients.filter(x=>x.id!==c.id);state.activeId=state.clients[0]?.id||null;persist();showPage("home")}
+function fillClient(){const c=currentClient(),ids=["cName","cEmail","cAge","cHeight","cWeight","cGoal"];if(!c){ids.forEach(id=>document.getElementById(id).value="");return}cName.value=c.name||"";cEmail.value=c.email||"";cAge.value=c.age||"";cHeight.value=c.height||"";cWeight.value=c.weight||"";cGoal.value=c.goal||""}
+function renderClientList(){const box=document.getElementById("clientList");if(!box)return;box.innerHTML=state.clients.length?state.clients.map(c=>`<div class="card" style="cursor:pointer" onclick="selectClient('${c.id}')"><div style="display:flex;justify-content:space-between;gap:12px"><div><span class="eyebrow">CLIENT</span><h3 style="margin:5px 0">${esc(c.name||"بدون اسم")}</h3><div class="muted">${esc(c.goal||"بدون هدف")} • ${esc(c.weight||"--")} kg</div></div><span class="tag">${c.id===state.activeId?"مفتوح":"فتح"}</span></div><div class="muted" style="margin-top:10px">Diet ${c.meals.length} • Training ${c.days.length}/5</div><div class="actions"><button class="btn primary" onclick="event.stopPropagation();selectClient('${c.id}')">متابعة العميل</button><button class="btn" onclick="event.stopPropagation();generateLinkFor('${c.id}')">لينك العميل</button></div></div>`).join(""):'<div class="card empty" style="grid-column:1/-1">لسه مفيش عملاء. اضغط «إضافة عميل» وابدأ أول ملف.</div>'}
+function generateLinkFor(id){state.activeId=id;persist();showPage("client");setTimeout(createLink,50)}
+function createLink(){const c=currentClient();if(!c){alert("اختار عميل الأول");return}const payload={client:{name:c.name,email:c.email,age:c.age,height:c.height,weight:c.weight,goal:c.goal},meals:c.meals,days:c.days};const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));clientLink.value=location.href.split("#")[0]+"#client="+encoded}
+function copyClientLink(){const el=clientLink;if(!el.value)createLink();navigator.clipboard?.writeText(el.value).then(()=>alert("تم نسخ اللينك ✓")).catch(()=>{el.select();document.execCommand("copy");alert("تم نسخ اللينك ✓")})}
+function sendWhatsApp(){if(!clientLink.value)createLink();window.open("https://wa.me/?text="+encodeURIComponent("ده لينك المتابعة الخاص بيك من Ahmed Coaching:
+"+clientLink.value),"_blank")}
+function addMeal(){const c=currentClient();if(!c){alert("اختار عميل الأول");return}const n=mealName.value.trim();if(!n){alert("اكتب اسم الوجبة");return}c.meals.push({id:uid(),name:n,food:mealFood.value.trim(),cal:mealCal.value,p:mealP.value,c:mealC.value,f:mealF.value});["mealName","mealFood","mealCal","mealP","mealC","mealF"].forEach(id=>document.getElementById(id).value="");persist()}
+function editMeal(i){const c=currentClient(),m=c?.meals[i];if(!m)return;const n=prompt("اسم الوجبة:",m.name);if(n===null)return;const food=prompt("تفاصيل الأكل:",m.food||"");if(food===null)return;const cal=prompt("السعرات:",m.cal||"");if(cal===null)return;const p=prompt("Protein:",m.p||"");if(p===null)return;const cc=prompt("Carbs:",m.c||"");if(cc===null)return;const f=prompt("Fat:",m.f||"");if(f===null)return;Object.assign(m,{name:n.trim()||m.name,food,cal,p,c:cc,f});persist()}
+function deleteMeal(i){const c=currentClient();if(c&&confirm("تحذف الوجبة دي؟")){c.meals.splice(i,1);persist()}}
+function renderMeals(){const c=currentClient(),meals=c?.meals||[];dashMeals.textContent=meals.length;mealList.innerHTML=meals.length?meals.map((m,i)=>`<div class="meal"><div><h3>${esc(m.name)}</h3><div class="muted">${esc(m.food||"لم تتم إضافة تفاصيل")}</div><span class="tag">${esc(m.cal||"--")} kcal</span><span class="tag">P ${esc(m.p||"--")}g</span><span class="tag">C ${esc(m.c||"--")}g</span><span class="tag">F ${esc(m.f||"--")}g</span></div><div class="actions"><button class="btn" onclick="editMeal(${i})">تعديل</button><button class="btn danger" onclick="deleteMeal(${i})">حذف</button></div></div>`).join(""):'<div class="card empty">لسه مفيش وجبات. أضف الوجبات اللي عايز تبعتها للعميل.</div>'}
+function blankExercise(){return{name:"",sets:"3",reps:"10",rest:"90"}}
+function addTrainingDay(){const c=currentClient();if(!c){alert("اختار عميل الأول");return}if(c.days.length>=5){alert("عندك بالفعل 5 أيام.");return}c.days.push({name:"Day "+(c.days.length+1),exercises:Array.from({length:7},blankExercise)});persist()}
+function updateDayName(i,v){const c=currentClient();if(c){c.days[i].name=v;persist()}}
+function updateExercise(di,ei,f,v){const c=currentClient();if(c){c.days[di].exercises[ei][f]=v;localStorage.setItem(APP_KEY,JSON.stringify(state))}}
+function saveTrainingDay(i){const c=currentClient(),d=c?.days[i];if(!d)return;if(!d.name.trim()){alert("اكتب اسم اليوم");return}const m=d.exercises.findIndex(x=>!x.name.trim());if(m!==-1){alert("اكتب اسم التمرين رقم "+(m+1));return}persist();alert("تم حفظ يوم التدريب ✓")}
+function deleteTrainingDay(i){const c=currentClient();if(c&&confirm("حذف يوم التدريب ده؟")){c.days.splice(i,1);persist()}}
+function renderTraining(){const c=currentClient(),days=c?.days||[];dashDays.textContent=days.length;trainingList.innerHTML=days.length?days.map((d,i)=>`<div class="card day" style="margin-bottom:16px"><div class="dayhead" style="margin-bottom:12px"><div style="flex:1"><span class="eyebrow">TRAINING DAY ${i+1}</span><input value="${esc(d.name)}" onchange="updateDayName(${i},this.value)" style="margin-top:7px;font-size:17px;font-weight:700"></div><button class="btn danger" onclick="deleteTrainingDay(${i})">حذف اليوم</button></div><div style="overflow:auto"><table class="table" style="min-width:760px"><thead><tr><th>#</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>Client Weight</th></tr></thead><tbody>${d.exercises.map((x,j)=>`<tr><td>${j+1}</td><td><input value="${esc(x.name)}" placeholder="اسم التمرين" onchange="updateExercise(${i},${j},'name',this.value)"></td><td><input value="${esc(x.sets)}" onchange="updateExercise(${i},${j},'sets',this.value)"></td><td><input value="${esc(x.reps)}" onchange="updateExercise(${i},${j},'reps',this.value)"></td><td><input value="${esc(x.rest)}" onchange="updateExercise(${i},${j},'rest',this.value)"></td><td><span class="muted">العميل يسجله</span></td></tr>`).join("")}</tbody></table></div><div class="actions"><button class="btn primary" onclick="saveTrainingDay(${i})">حفظ يوم التدريب ✓</button></div></div>`).join(""):'<div class="card empty">اضغط «إضافة يوم» لإنشاء أول يوم.</div>'}
+function logKey(){const c=currentClient();return "AHMED_CLIENT_LOGS_"+(c?.id||c?.email||c?.name||"client")}
+function getLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(logKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
+function renderReport(){const l=getLogs();reportWater.textContent=(l.water||0)+"/8";reportWeights.textContent=l.weights.length;reportGym.textContent=l.gym.length;reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";weightRows.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';gymRows.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لا توجد أوزان جيم مسجلة.</div>'}
+function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining();renderReport()}
 renderAll();
-
 function decodePortal(){
   const m=location.hash.match(/^#client=(.+)$/);
   if(!m)return null;
