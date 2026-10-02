@@ -168,14 +168,19 @@ function setSync(msg,kind=""){const el=document.getElementById("syncStatus");if(
 async function sbFetch(path,options={}){
   const headers={
     apikey:SUPABASE_KEY,
+    Authorization:"Bearer "+SUPABASE_KEY,
     "Content-Type":"application/json",
+    Accept:"application/json",
     ...(options.headers||{})
   };
-  delete headers.Authorization;
+  // Always keep both headers. Supabase REST accepts the publishable key in the
+  // apikey header and uses the same key as the bearer token for API auth.
+  headers.apikey=SUPABASE_KEY;
+  headers.Authorization="Bearer "+SUPABASE_KEY;
   let r;
   try{
-    r=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...options,headers});
-  }catch(e){throw new Error("تعذر الاتصال بـ Supabase: "+(e?.message||"Failed to fetch"))}
+    r=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...options,mode:"cors",headers});
+  }catch(e){throw new Error("تعذر الاتصال بـ Supabase: "+(e?.message||"Failed to fetch")+" — تأكد أن Project URL وPublishable Key صحيحين")}
   const text=await r.text();
   if(!r.ok) throw new Error("HTTP "+r.status+" — "+(text||"Supabase rejected the request"));
   try{return text?JSON.parse(text):null}catch(e){return null}
@@ -192,6 +197,11 @@ function clientForRemote(c,remoteLogs=null){
   return {id:c.id,name:c.name||"",email:c.email||"",age:c.age||null,height:c.height||null,weight:c.weight||null,goal:c.goal||"",meals:c.meals||[],days:c.days||[],logs:mergeLogs(getLogsFor(c),remoteLogs),updated_at:new Date().toISOString()}
 }
 function getLogsFor(c){try{return Object.assign(emptyLogs(),JSON.parse(localStorage.getItem("AHMED_CLIENT_LOGS_"+c.id)||"{}"))}catch(e){return emptyLogs()}}
+async function testSupabaseConnection(){
+  // A lightweight GET gives a useful HTTP error instead of silently reporting
+  // an empty sync. It never changes or deletes any data.
+  return await sbFetch("coach_clients_live?select=id&limit=1");
+}
 async function syncNow(){
   if(syncBusy)return; syncBusy=true; setSync("Live Sync: جاري المزامنة…");
   try{
