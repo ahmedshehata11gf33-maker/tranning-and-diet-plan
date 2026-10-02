@@ -166,34 +166,66 @@ function restoreBackup(){
 }
 function setSync(msg,kind=""){const el=document.getElementById("syncStatus");if(el){el.textContent=msg;el.className="syncbar "+kind}}
 async function sbFetch(path,options={}){
-  const r=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...options,headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",...(options.headers||{})}});
-  const text=await r.text(); if(!r.ok) throw new Error(text||("HTTP "+r.status));
-  return text?JSON.parse(text):null;
+  const headers={
+    apikey:SUPABASE_KEY,
+    "Content-Type":"application/json",
+    ...(options.headers||{})
+  };
+  delete headers.Authorization;
+  let r;
+  try{
+    r=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...options,headers});
+  }catch(e){throw new Error("تعذر الاتصال بـ Supabase: "+(e?.message||"Failed to fetch"))}
+  const text=await r.text();
+  if(!r.ok) throw new Error("HTTP "+r.status+" — "+(text||"Supabase rejected the request"));
+  try{return text?JSON.parse(text):null}catch(e){return null}
 }
-function clientForRemote(c){return {id:c.id,name:c.name||"",email:c.email||"",age:c.age||null,height:c.height||null,weight:c.weight||null,goal:c.goal||"",meals:c.meals||[],days:c.days||[],logs:getLogsFor(c),updated_at:new Date().toISOString()}}
-function getLogsFor(c){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem("AHMED_CLIENT_LOGS_"+c.id)||"{}"))}catch(e){return {weights:[],water:0,gym:[]}}}
+function emptyLogs(){return {weights:[],water:0,gym:[]}}
+function mergeLogs(a,b){
+  const A=Object.assign(emptyLogs(),a||{}), B=Object.assign(emptyLogs(),b||{});
+  const weights=[...(A.weights||[]),...(B.weights||[])];
+  const gym=[...(A.gym||[]),...(B.gym||[])];
+  const uniq=(arr)=>{const seen=new Set();return arr.filter(x=>{const k=JSON.stringify(x);if(seen.has(k))return false;seen.add(k);return true})};
+  return {weights:uniq(weights),water:Math.max(Number(A.water||0),Number(B.water||0)),gym:uniq(gym)};
+}
+function clientForRemote(c,remoteLogs=null){
+  return {id:c.id,name:c.name||"",email:c.email||"",age:c.age||null,height:c.height||null,weight:c.weight||null,goal:c.goal||"",meals:c.meals||[],days:c.days||[],logs:mergeLogs(getLogsFor(c),remoteLogs),updated_at:new Date().toISOString()}
+}
+function getLogsFor(c){try{return Object.assign(emptyLogs(),JSON.parse(localStorage.getItem("AHMED_CLIENT_LOGS_"+c.id)||"{}"))}catch(e){return emptyLogs()}}
 async function syncNow(){
-  if(syncBusy)return; syncBusy=true; setSync("Live Sync: جاري الحفظ…");
+  if(syncBusy)return; syncBusy=true; setSync("Live Sync: جاري المزامنة…");
   try{
     backupState("before-sync");
-    // Never clear local data from a failed/empty remote response.
-    for(const c of state.clients){await sbFetch("coach_clients_live?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(clientForRemote(c))});}
+    // Read remote first so we never overwrite client logs with an empty local copy.
     const remote=await sbFetch("coach_clients_live?select=*&order=updated_at.desc");
-    let changed=false;
-    for(const r of (remote||[])){
+    const rows=Array.isArray(remote)?remote:[];
+    for(const r of rows){
       let c=state.clients.find(x=>x.id===r.id);
-      if(!c){c=normalizeClient({id:r.id,name:r.name,email:r.email,age:r.age,height:r.height,weight:r.weight,goal:r.goal,meals:r.meals||[],days:r.days||[]});state.clients.push(c);changed=true;}
-      else{
-        // Remote only fills missing local plans; it never overwrites non-empty local data.
-        if((!c.meals?.length)&&(Array.isArray(r.meals)&&r.meals.length)){c.meals=r.meals;changed=true}
-        if((!c.days?.length)&&(Array.isArray(r.days)&&r.days.length)){c.days=r.days;changed=true}
-        if(!c.name&&r.name){c.name=r.name;changed=true}
+      if(!c){
+        c=normalizeClient({id:r.id,name:r.name,email:r.email,age:r.age,height:r.height,weight:r.weight,goal:r.goal,meals:Array.isArray(r.meals)?r.meals:[],days:Array.isArray(r.days)?r.days:[]});
+        state.clients.push(c);
+      }else{
+        if(!c.name&&r.name)c.name=r.name;
+        if(!c.email&&r.email)c.email=r.email;
+        if(!c.age&&r.age)c.age=r.age;
+        if(!c.height&&r.height)c.height=r.height;
+        if(!c.weight&&r.weight)c.weight=r.weight;
+        if(!c.goal&&r.goal)c.goal=r.goal;
+        if(!c.meals?.length&&Array.isArray(r.meals)&&r.meals.length)c.meals=r.meals;
+        if(!c.days?.length&&Array.isArray(r.days)&&r.days.length)c.days=r.days;
       }
-      if(r.logs){localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(r.logs));}
+      if(r.logs)localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(mergeLogs(getLogsFor(c),r.logs)));
     }
-    if(changed)localStorage.setItem(APP_KEY,JSON.stringify(state));
-    renderAll(); setSync("Live Sync: متصل ✓ — البيانات المحلية محفوظة", "ok");
-  }catch(e){console.error(e);setSync("Live Sync: خطأ — "+e.message,"err");}
+    // Upload local clients, but preserve any logs already on the server.
+    for(const c of state.clients){
+      const rr=rows.find(x=>x.id===c.id);
+      const payload=clientForRemote(c,rr?.logs||null);
+      await sbFetch("coach_clients_live?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(payload)});
+      localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(payload.logs));
+    }
+    localStorage.setItem(APP_KEY,JSON.stringify(state));
+    renderAll(); setSync("Live Sync: متصل ✓ — آخر تحديث الآن", "ok");
+  }catch(e){console.error(e);setSync("Live Sync: فشل — "+e.message,"err");}
   finally{syncBusy=false}
 }
 
@@ -242,7 +274,8 @@ async function renderReport(){
 function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining();renderReport()}
 backupState("startup");
 renderAll();
-setInterval(()=>{ if(!location.hash.startsWith("#client=") && currentClient()) renderReport(); },5000);
+if(!location.hash.startsWith("#client=")) setTimeout(()=>syncNow(),300);
+setInterval(()=>{ if(!location.hash.startsWith("#client=") && currentClient()) syncNow(); },10000);
 function decodePortal(){
   const m=location.hash.match(/^#client=(.+)$/);
   if(!m)return null;
@@ -263,17 +296,26 @@ function portal(){
 function portalLogKey(){return "AHMED_CLIENT_LOGS_"+(window.PORTAL.client.id||window.PORTAL.client.email||window.PORTAL.client.name)}
 function portalLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(portalLogKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
 async function savePortalLogs(l){
-  localStorage.setItem(portalLogKey(),JSON.stringify(l));
+  const merged=mergeLogs(portalLogs(),l);
+  localStorage.setItem(portalLogKey(),JSON.stringify(merged));
   const id=window.PORTAL?.client?.id;
   if(!id)return;
   try{
-    await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({logs:l,updated_at:new Date().toISOString()})});
+    const remote=await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(id)+"&select=logs");
+    const remoteLogs=remote?.[0]?.logs||null;
+    const finalLogs=mergeLogs(merged,remoteLogs);
+    await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({logs:finalLogs,updated_at:new Date().toISOString()})});
+    localStorage.setItem(portalLogKey(),JSON.stringify(finalLogs));
   }catch(e){
+    console.error("remote log save",e);
     try{
-      await sbFetch("coach_clients_live",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id,name:window.PORTAL.client.name||"",email:window.PORTAL.client.email||"",age:window.PORTAL.client.age||null,height:window.PORTAL.client.height||null,weight:window.PORTAL.client.weight||null,goal:window.PORTAL.client.goal||"",meals:window.PORTAL.meals||[],days:window.PORTAL.days||[],logs:l,updated_at:new Date().toISOString()})});
-    }catch(e2){console.warn("remote log save",e2)}
+      await sbFetch("coach_clients_live?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id,name:window.PORTAL.client.name||"",email:window.PORTAL.client.email||"",age:window.PORTAL.client.age||null,height:window.PORTAL.client.height||null,weight:window.PORTAL.client.weight||null,goal:window.PORTAL.client.goal||"",meals:window.PORTAL.meals||[],days:window.PORTAL.days||[],logs:merged,updated_at:new Date().toISOString()})});
+    }catch(e2){
+      alert("تم الحفظ على جهازك، لكن الـLive Sync فشل: "+e2.message);
+    }
   }
 }
+
 function portalTab(tab){
   document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
   const p=window.PORTAL,l=portalLogs(),box=document.getElementById("portalContent");
