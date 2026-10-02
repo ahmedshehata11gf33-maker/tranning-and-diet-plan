@@ -58,7 +58,8 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
   </div>
   <div class="section"><div><span class="eyebrow">CLIENTS</span><h2>كل العملاء</h2></div><button class="btn primary" onclick="newClient()">+ إضافة عميل</button></div>
   <div id="clientList" class="cards"></div>
-  <div class="section"><h2>الخطوات</h2></div>
+  <div class="section"><div><h2>حماية بيانات العملاء</h2><span class="muted">البيانات الحالية تفضل كما هي على نفس المتصفح.</span></div><div class="actions"><button class="btn" onclick="backupNow()">حفظ نسخة احتياطية</button><label class="btn">استرجاع نسخة<input id="restoreFile" type="file" accept=".json" style="display:none" onchange="restoreNow(event)"></label></div></div>
+   <div class="section"><h2>الخطوات</h2></div>
   <div class="cards">
     <button class="card btn" onclick="showPage('client')">① بيانات العميل</button>
     <button class="card btn" onclick="showPage('diet')">② جهز الدايت</button>
@@ -146,7 +147,32 @@ const APP_KEY="AHMED_COACHING_MULTI_1";
 let state=loadState();
 function uid(){return "c_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7)}
 function normalizeClient(c){return Object.assign({id:uid(),name:"",email:"",age:"",height:"",weight:"",goal:"",meals:[],days:[]},c,{meals:Array.isArray(c.meals)?c.meals:[],days:Array.isArray(c.days)?c.days:[]})}
-function loadState(){try{const r=JSON.parse(localStorage.getItem(APP_KEY)||"null");if(r&&Array.isArray(r.clients))return Object.assign({clients:[],activeId:null},r);const o=JSON.parse(localStorage.getItem("AHMED_COACHING_READY_1")||"null");if(o&&o.client){const c=normalizeClient(Object.assign({},o.client,{meals:o.meals||[],days:o.days||[]}));const n={clients:[c],activeId:c.id};localStorage.setItem(APP_KEY,JSON.stringify(n));return n}}catch(e){}return{clients:[],activeId:null}}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(APP_KEY);
+    if(raw){
+      const r=JSON.parse(raw);
+      if(r && Array.isArray(r.clients)){
+        r.clients=r.clients.map(normalizeClient);
+        if(!r.activeId || !r.clients.some(c=>c.id===r.activeId)) r.activeId=r.clients[0]?.id||null;
+        return r;
+      }
+    }
+    const oldRaw=localStorage.getItem("AHMED_COACHING_READY_1");
+    if(oldRaw){
+      const o=JSON.parse(oldRaw);
+      if(o&&o.client){
+        const c=normalizeClient(Object.assign({},o.client,{meals:o.meals||[],days:o.days||[]}));
+        const n={clients:[c],activeId:c.id};
+        localStorage.setItem(APP_KEY,JSON.stringify(n));
+        return n;
+      }
+    }
+  }catch(e){
+    console.warn("Ahmed Coaching storage read error",e);
+  }
+  return {clients:[],activeId:null};
+}
 function currentClient(){return state.clients.find(c=>c.id===state.activeId)||null}
 function persist(){localStorage.setItem(APP_KEY,JSON.stringify(state));renderAll()}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
@@ -176,6 +202,36 @@ function renderTraining(){const c=currentClient(),days=c?.days||[];dashDays.text
 function logKey(){const c=currentClient();return "AHMED_CLIENT_LOGS_"+(c?.id||c?.email||c?.name||"client")}
 function getLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(logKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
 function renderReport(){const l=getLogs();reportWater.textContent=(l.water||0)+"/8";reportWeights.textContent=l.weights.length;reportGym.textContent=l.gym.length;reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";weightRows.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';gymRows.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لا توجد أوزان جيم مسجلة.</div>'}
+function backupNow(){
+  const data=localStorage.getItem(APP_KEY);
+  if(!data){alert("مفيش بيانات محفوظة على المتصفح ده.");return}
+  const blob=new Blob([data],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="ahmed-coaching-backup.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  alert("تم حفظ نسخة احتياطية من العملاء ✓");
+}
+function restoreNow(ev){
+  const file=ev.target.files?.[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const incoming=JSON.parse(reader.result);
+      if(!incoming || !Array.isArray(incoming.clients)) throw new Error("invalid");
+      const current=loadState();
+      const byId=new Map(current.clients.map(c=>[c.id,c]));
+      incoming.clients.map(normalizeClient).forEach(c=>byId.set(c.id,c));
+      state={clients:Array.from(byId.values()),activeId:incoming.activeId&&byId.has(incoming.activeId)?incoming.activeId:(state.activeId||Array.from(byId.keys())[0]||null)};
+      persist();
+      alert("تم استرجاع البيانات بدون حذف العملاء الموجودين ✓");
+    }catch(e){alert("ملف النسخة الاحتياطية غير صالح.");}
+    ev.target.value="";
+  };
+  reader.readAsText(file);
+}
+
 function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining();renderReport()}
 renderAll();
 function decodePortal(){
