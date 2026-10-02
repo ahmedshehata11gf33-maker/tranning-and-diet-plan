@@ -59,7 +59,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
   </div>
   <div class="section"><div><span class="eyebrow">CLIENTS</span><h2>كل العملاء</h2></div><button class="btn primary" onclick="newClient()">+ إضافة عميل</button></div>
   <div id="clientList" class="cards"></div>
-  <div class="section"><div><h2>حماية بيانات العملاء</h2><span class="muted">البيانات الحالية تفضل كما هي على نفس المتصفح.</span></div><div class="actions"><button class="btn" onclick="backupNow()">حفظ نسخة احتياطية</button><label class="btn">استرجاع نسخة<input id="restoreFile" type="file" accept=".json" style="display:none" onchange="restoreNow(event)"></label></div></div>
+  <div class="section"><div><h2>حماية بيانات العملاء</h2><span class="muted">البيانات الحالية تفضل كما هي على نفس المتصفح.</span></div><div class="actions"><button class="btn" onclick="backupNow()">حفظ نسخة احتياطية</button><button class="btn primary" onclick="liveLoadAll()">مزامنة العملاء الآن ↻</button><label class="btn">استرجاع نسخة<input id="restoreFile" type="file" accept=".json" style="display:none" onchange="restoreNow(event)"></label></div></div>
    <div class="section"><h2>الخطوات</h2></div>
   <div class="cards">
     <button class="card btn" onclick="showPage('client')">① بيانات العميل</button>
@@ -177,30 +177,69 @@ async function liveUpsertClient(c){
 async function liveLoadAll(){
   if(!sb)return;
   try{
+    // First migration: upload the clients that already exist in this browser.
+    // This is the missing step that caused coach_clients_live to remain empty.
+    for(const c of state.clients){
+      await liveUpsertClient(c);
+    }
+
     const {data,error}=await sb.from("coach_clients_live").select("*").order("created_at",{ascending:true});
     if(error) throw error;
+
     if(Array.isArray(data)&&data.length){
-      const remote=data.map(r=>normalizeClient({id:r.id,name:r.name,email:r.email,age:r.age,height:r.height,weight:r.weight,goal:r.goal,meals:r.meals,days:r.days}));
-      remote.forEach((r,i)=>{r.logs=data[i].logs||{weights:[],water:0,gym:[]};});
-      const localById=new Map(state.clients.map(c=>[c.id,c]));
-      remote.forEach(c=>localById.set(c.id,c));
-      state.clients=Array.from(localById.values());
-      if(!state.activeId) state.activeId=state.clients[0]?.id||null;
+      const remoteById=new Map(data.map(r=>[r.id,r]));
+      // Remote rows are authoritative for logs, while local plan data is retained
+      // if a remote row has empty plan fields.
+      state.clients=state.clients.map(local=>{
+        const r=remoteById.get(local.id);
+        if(!r)return local;
+        return normalizeClient({
+          id:local.id,
+          name:r.name || local.name,
+          email:r.email || local.email,
+          age:r.age ?? local.age,
+          height:r.height ?? local.height,
+          weight:r.weight ?? local.weight,
+          goal:r.goal || local.goal,
+          meals:Array.isArray(r.meals)&&r.meals.length?r.meals:local.meals,
+          days:Array.isArray(r.days)&&r.days.length?r.days:local.days
+        });
+      });
+      // Include any remote clients not present locally.
+      for(const r of data){
+        if(!state.clients.some(c=>c.id===r.id)){
+          state.clients.push(normalizeClient({
+            id:r.id,name:r.name,email:r.email,age:r.age,height:r.height,
+            weight:r.weight,goal:r.goal,meals:r.meals,days:r.days
+          }));
+        }
+      }
       localStorage.setItem(APP_KEY,JSON.stringify(state));
       renderAll();
     }
     setSyncStatus("Live Sync: متصل ✓");
-  }catch(e){console.warn("live all",e);setSyncStatus("Live Sync: محلي فقط",false);}
+  }catch(e){
+    console.error("LIVE SYNC ERROR",e);
+    setSyncStatus("Live Sync: حصل خطأ",false);
+  }
 }
 async function liveSaveLogsForClient(c,logs){
-  if(!sb||!c)return;
+  if(!sb||!c)return false;
   try{
     const {error}=await sb.from("coach_clients_live").upsert({
       id:c.id,name:c.name||"",email:c.email||"",age:c.age||null,height:c.height||null,weight:c.weight||null,goal:c.goal||"",
       meals:c.meals||[],days:c.days||[],logs:logs||{weights:[],water:0,gym:[]},updated_at:new Date().toISOString()
     },{onConflict:"id"});
     if(error) throw error;
-  }catch(e){console.warn("live logs",e);}
+    const s=document.getElementById("portalSyncStatus");
+    if(s){s.textContent="LIVE SYNC ✓";s.style.color="#caff3f";}
+    return true;
+  }catch(e){
+    console.error("live logs",e);
+    const s=document.getElementById("portalSyncStatus");
+    if(s){s.textContent="تعذر الاتصال";s.style.color="#ff6978";}
+    return false;
+  }
 }
 
 const APP_KEY="AHMED_COACHING_MULTI_1";
