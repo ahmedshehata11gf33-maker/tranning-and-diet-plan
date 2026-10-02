@@ -29,6 +29,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
 @media(max-width:900px){.sidebar{display:none}.main{margin:0;padding:17px 13px 80px}.mobile{display:flex;position:fixed;right:0;left:0;bottom:0;height:62px;background:#0c1117f5;border-top:1px solid var(--line);z-index:30;justify-content:space-around}.mobile button{border:0;background:transparent;color:#a5aebb}.mobile button.active{color:var(--lime)}.mobile i{display:block;font-style:normal;font-size:18px}.cards{grid-template-columns:repeat(2,1fr)}.hero h2{font-size:28px}.formgrid,.formgrid.three{grid-template-columns:1fr}.water{grid-template-columns:repeat(4,1fr)}.linkrow{flex-wrap:wrap}.linkrow input{min-width:100%}}
 @media(max-width:520px){.top{display:none}.cards{gap:8px}.card{padding:14px}.hero{padding:22px}.hero:after{display:none}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -46,7 +47,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
 </aside>
 
 <main class="main">
-<div class="top"><div><span class="eyebrow">COACH WORKSPACE</span><h1>Ahmed Coaching</h1></div><div class="avatar">A</div></div>
+<div class="top"><div><span class="eyebrow">COACH WORKSPACE</span><h1>Ahmed Coaching</h1><div id="syncStatus" class="muted">Live Sync: جاري الاتصال...</div></div><div class="avatar">A</div></div>
 
 <section id="home" class="page active">
   <div class="hero"><span class="eyebrow">COACHING HUB</span><h2>Build. Track. <em>Progress.</em></h2><p>جهز للعميل الدايت والتمرين، احفظ البيانات، واعمله لينك خاص يدخل منه ويسجل الوزن والمياه وأوزان الجيم.</p><div class="chips"><span class="chip">Diet</span><span class="chip">Training</span><span class="chip">Weight</span><span class="chip">Water</span><span class="chip">Gym Weights</span></div></div>
@@ -143,6 +144,65 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
 </div>
 
 <script>
+
+const SUPABASE_URL="https://zqrjaseceqgmgtokvkvi.supabase.co";
+const SUPABASE_KEY="sb_publishable_lGakUfjfRL9gcy9-XxW--Q_0b0HeSB7";
+const sb=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY);
+let liveClientId=null;
+function setSyncStatus(t,ok=true){
+  const el=document.getElementById("syncStatus");
+  if(el){el.textContent=t;el.style.color=ok?"#caff3f":"#ff9aa5";}
+}
+async function liveLoadClient(id){
+  if(!sb||!id)return null;
+  try{
+    const {data,error}=await sb.from("coach_clients_live").select("*").eq("id",id).maybeSingle();
+    if(error) throw error;
+    return data;
+  }catch(e){console.warn("live load",e);return null}
+}
+async function liveUpsertClient(c){
+  if(!sb||!c)return;
+  try{
+    const row={
+      id:c.id,name:c.name||"",email:c.email||"",age:c.age||null,height:c.height||null,weight:c.weight||null,goal:c.goal||"",
+      meals:c.meals||[],days:c.days||[],logs:c.logs||{weights:[],water:0,gym:[]},
+      updated_at:new Date().toISOString()
+    };
+    const {error}=await sb.from("coach_clients_live").upsert(row,{onConflict:"id"});
+    if(error) throw error;
+    setSyncStatus("Live Sync: متصل ✓");
+  }catch(e){console.warn("live save",e);setSyncStatus("Live Sync: محلي فقط",false);}
+}
+async function liveLoadAll(){
+  if(!sb)return;
+  try{
+    const {data,error}=await sb.from("coach_clients_live").select("*").order("created_at",{ascending:true});
+    if(error) throw error;
+    if(Array.isArray(data)&&data.length){
+      const remote=data.map(r=>normalizeClient({id:r.id,name:r.name,email:r.email,age:r.age,height:r.height,weight:r.weight,goal:r.goal,meals:r.meals,days:r.days}));
+      remote.forEach((r,i)=>{r.logs=data[i].logs||{weights:[],water:0,gym:[]};});
+      const localById=new Map(state.clients.map(c=>[c.id,c]));
+      remote.forEach(c=>localById.set(c.id,c));
+      state.clients=Array.from(localById.values());
+      if(!state.activeId) state.activeId=state.clients[0]?.id||null;
+      localStorage.setItem(APP_KEY,JSON.stringify(state));
+      renderAll();
+    }
+    setSyncStatus("Live Sync: متصل ✓");
+  }catch(e){console.warn("live all",e);setSyncStatus("Live Sync: محلي فقط",false);}
+}
+async function liveSaveLogsForClient(c,logs){
+  if(!sb||!c)return;
+  try{
+    const {error}=await sb.from("coach_clients_live").upsert({
+      id:c.id,name:c.name||"",email:c.email||"",age:c.age||null,height:c.height||null,weight:c.weight||null,goal:c.goal||"",
+      meals:c.meals||[],days:c.days||[],logs:logs||{weights:[],water:0,gym:[]},updated_at:new Date().toISOString()
+    },{onConflict:"id"});
+    if(error) throw error;
+  }catch(e){console.warn("live logs",e);}
+}
+
 const APP_KEY="AHMED_COACHING_MULTI_1";
 let state=loadState();
 function uid(){return "c_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7)}
@@ -174,7 +234,12 @@ function loadState(){
   return {clients:[],activeId:null};
 }
 function currentClient(){return state.clients.find(c=>c.id===state.activeId)||null}
-function persist(){localStorage.setItem(APP_KEY,JSON.stringify(state));renderAll()}
+function persist(){
+  localStorage.setItem(APP_KEY,JSON.stringify(state));
+  renderAll();
+  const c=currentClient();
+  if(c) liveUpsertClient(c);
+}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function showPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));const p=document.getElementById(id);if(p)p.classList.add("active");document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===id));window.scrollTo({top:0,behavior:"smooth"})}
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
@@ -185,7 +250,7 @@ function deleteCurrentClient(){const c=currentClient();if(!c)return;if(!confirm(
 function fillClient(){const c=currentClient(),ids=["cName","cEmail","cAge","cHeight","cWeight","cGoal"];if(!c){ids.forEach(id=>document.getElementById(id).value="");return}cName.value=c.name||"";cEmail.value=c.email||"";cAge.value=c.age||"";cHeight.value=c.height||"";cWeight.value=c.weight||"";cGoal.value=c.goal||""}
 function renderClientList(){const box=document.getElementById("clientList");if(!box)return;box.innerHTML=state.clients.length?state.clients.map(c=>`<div class="card" style="cursor:pointer" onclick="selectClient('${c.id}')"><div style="display:flex;justify-content:space-between;gap:12px"><div><span class="eyebrow">CLIENT</span><h3 style="margin:5px 0">${esc(c.name||"بدون اسم")}</h3><div class="muted">${esc(c.goal||"بدون هدف")} • ${esc(c.weight||"--")} kg</div></div><span class="tag">${c.id===state.activeId?"مفتوح":"فتح"}</span></div><div class="muted" style="margin-top:10px">Diet ${c.meals.length} • Training ${c.days.length}/5</div><div class="actions"><button class="btn primary" onclick="event.stopPropagation();selectClient('${c.id}')">متابعة العميل</button><button class="btn" onclick="event.stopPropagation();generateLinkFor('${c.id}')">لينك العميل</button></div></div>`).join(""):'<div class="card empty" style="grid-column:1/-1">لسه مفيش عملاء. اضغط «إضافة عميل» وابدأ أول ملف.</div>'}
 function generateLinkFor(id){state.activeId=id;persist();showPage("client");setTimeout(createLink,50)}
-function createLink(){const c=currentClient();if(!c){alert("اختار عميل الأول");return}const payload={client:{name:c.name,email:c.email,age:c.age,height:c.height,weight:c.weight,goal:c.goal},meals:c.meals,days:c.days};const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));clientLink.value=location.href.split("#")[0]+"#client="+encoded}
+function createLink(){const c=currentClient();if(!c){alert("اختار عميل الأول");return}const payload={client:{id:c.id,name:c.name,email:c.email,age:c.age,height:c.height,weight:c.weight,goal:c.goal},meals:c.meals,days:c.days};const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));clientLink.value=location.href.split("#")[0]+"#client="+encoded}
 function copyClientLink(){const el=clientLink;if(!el.value)createLink();navigator.clipboard?.writeText(el.value).then(()=>alert("تم نسخ اللينك ✓")).catch(()=>{el.select();document.execCommand("copy");alert("تم نسخ اللينك ✓")})}
 function sendWhatsApp(){if(!clientLink.value)createLink();window.open("https://wa.me/?text="+encodeURIComponent("ده لينك المتابعة الخاص بيك من Ahmed Coaching:\n"+clientLink.value),"_blank")}
 function addMeal(){const c=currentClient();if(!c){alert("اختار عميل الأول");return}const n=mealName.value.trim();if(!n){alert("اكتب اسم الوجبة");return}c.meals.push({id:uid(),name:n,food:mealFood.value.trim(),cal:mealCal.value,p:mealP.value,c:mealC.value,f:mealF.value});["mealName","mealFood","mealCal","mealP","mealC","mealF"].forEach(id=>document.getElementById(id).value="");persist()}
@@ -200,7 +265,19 @@ function saveTrainingDay(i){const c=currentClient(),d=c?.days[i];if(!d)return;if
 function deleteTrainingDay(i){const c=currentClient();if(c&&confirm("حذف يوم التدريب ده؟")){c.days.splice(i,1);persist()}}
 function renderTraining(){const c=currentClient(),days=c?.days||[];dashDays.textContent=days.length;trainingList.innerHTML=days.length?days.map((d,i)=>`<div class="card day" style="margin-bottom:16px"><div class="dayhead" style="margin-bottom:12px"><div style="flex:1"><span class="eyebrow">TRAINING DAY ${i+1}</span><input value="${esc(d.name)}" onchange="updateDayName(${i},this.value)" style="margin-top:7px;font-size:17px;font-weight:700"></div><button class="btn danger" onclick="deleteTrainingDay(${i})">حذف اليوم</button></div><div style="overflow:auto"><table class="table" style="min-width:760px"><thead><tr><th>#</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>Client Weight</th></tr></thead><tbody>${d.exercises.map((x,j)=>`<tr><td>${j+1}</td><td><input value="${esc(x.name)}" placeholder="اسم التمرين" onchange="updateExercise(${i},${j},'name',this.value)"></td><td><input value="${esc(x.sets)}" onchange="updateExercise(${i},${j},'sets',this.value)"></td><td><input value="${esc(x.reps)}" onchange="updateExercise(${i},${j},'reps',this.value)"></td><td><input value="${esc(x.rest)}" onchange="updateExercise(${i},${j},'rest',this.value)"></td><td><span class="muted">العميل يسجله</span></td></tr>`).join("")}</tbody></table></div><div class="actions"><button class="btn primary" onclick="saveTrainingDay(${i})">حفظ يوم التدريب ✓</button></div></div>`).join(""):'<div class="card empty">اضغط «إضافة يوم» لإنشاء أول يوم.</div>'}
 function logKey(){const c=currentClient();return "AHMED_CLIENT_LOGS_"+(c?.id||c?.email||c?.name||"client")}
-function getLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(logKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
+function getLogs(){
+  const defaults={weights:[],water:0,gym:[]};
+  try{
+    const c=currentClient();
+    const direct=localStorage.getItem(logKey());
+    if(direct) return Object.assign(defaults,JSON.parse(direct));
+    if(c){
+      const old=localStorage.getItem("AHMED_PORTAL_LOGS_"+(c.email||c.name||"client"));
+      if(old) return Object.assign(defaults,JSON.parse(old));
+    }
+  }catch(e){}
+  return defaults;
+}
 function renderReport(){const l=getLogs();reportWater.textContent=(l.water||0)+"/8";reportWeights.textContent=l.weights.length;reportGym.textContent=l.gym.length;reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";weightRows.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';gymRows.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لا توجد أوزان جيم مسجلة.</div>'}
 function backupNow(){
   const data=localStorage.getItem(APP_KEY);
@@ -234,6 +311,7 @@ function restoreNow(ev){
 
 function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining();renderReport()}
 renderAll();
+if(location.hash.startsWith("#client=")===false) liveLoadAll();
 function decodePortal(){
   const m=location.hash.match(/^#client=(.+)$/);
   if(!m)return null;
@@ -245,15 +323,48 @@ function portal(){
   window.PORTAL=p;
   document.body.innerHTML=`<main class="portal">
   <div class="portal-top"><div class="brand"><div class="logo">A</div><div><b>AHMED COACHING</b><small>CLIENT PORTAL</small></div></div><div class="avatar">A</div></div>
-  <div class="card"><span class="eyebrow">YOUR COACHING PLAN</span><h1 style="margin:5px 0">${esc(p.client.name)} 👋</h1><div class="muted">${esc(p.client.goal||"Coaching")} • ${esc(p.client.weight||"--")} kg</div></div>
+  <div class="card"><span id="portalSyncStatus" class="eyebrow">LIVE SYNC</span><br><span class="eyebrow">YOUR COACHING PLAN</span><h1 style="margin:5px 0">${esc(p.client.name)} 👋</h1><div class="muted">${esc(p.client.goal||"Coaching")} • ${esc(p.client.weight||"--")} kg</div></div>
   <div class="portal-tabs"><button class="btn active" data-tab="diet">الدايت</button><button class="btn" data-tab="training">التمرين</button><button class="btn" data-tab="weight">الوزن</button><button class="btn" data-tab="water">المياه</button><button class="btn" data-tab="gym">أوزان الجيم</button></div>
   <div id="portalContent"></div></main>`;
   document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>portalTab(b.dataset.tab));
   portalTab("diet");
+  portalLoadRemote();
 }
-function portalLogKey(){return "AHMED_PORTAL_LOGS_"+(window.PORTAL.client.email||window.PORTAL.client.name)}
-function portalLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(portalLogKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
-function savePortalLogs(l){localStorage.setItem(portalLogKey(),JSON.stringify(l))}
+function portalLogKey(){
+  const c=window.PORTAL.client||{};
+  return "AHMED_CLIENT_LOGS_"+(c.id||c.email||c.name||"client");
+}
+function portalLogs(){
+  try{
+    const key=portalLogKey();
+    const direct=localStorage.getItem(key);
+    if(direct) return Object.assign({weights:[],water:0,gym:[]},JSON.parse(direct));
+    const c=window.PORTAL.client||{};
+    const oldKey="AHMED_PORTAL_LOGS_"+(c.email||c.name||"client");
+    const old=localStorage.getItem(oldKey);
+    if(old) return Object.assign({weights:[],water:0,gym:[]},JSON.parse(old));
+  }catch(e){}
+  return {weights:[],water:0,gym:[]};
+}
+async function portalLoadRemote(){
+  const c=window.PORTAL?.client;
+  if(!sb||!c?.id)return;
+  try{
+    const {data,error}=await sb.from("coach_clients_live").select("logs").eq("id",c.id).maybeSingle();
+    if(error) throw error;
+    if(data?.logs){
+      localStorage.setItem(portalLogKey(),JSON.stringify(data.logs));
+      portalTab(document.querySelector(".portal-tabs .active")?.dataset.tab||"weight");
+    }
+  }catch(e){console.warn("portal remote load",e);}
+}
+
+function savePortalLogs(l){
+  localStorage.setItem(portalLogKey(),JSON.stringify(l));
+  const c=window.PORTAL.client||{};
+  if(!c.id && (c.email||c.name)) localStorage.setItem("AHMED_PORTAL_LOGS_"+(c.email||c.name),JSON.stringify(l));
+  if(sb && c.id) liveSaveLogsForClient({id:c.id,name:c.name,email:c.email,age:c.age,height:c.height,weight:c.weight,goal:c.goal,meals:c.meals,days:c.days},l);
+}
 function portalTab(tab){
   document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
   const p=window.PORTAL,l=portalLogs(),box=document.getElementById("portalContent");
