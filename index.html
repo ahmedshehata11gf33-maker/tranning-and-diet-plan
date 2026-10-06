@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ahmed Coaching — Final Client System</title>
+<title>Ahmed Coaching</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
@@ -84,7 +84,7 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
       <button class="btn" onclick="newClient()">+ عميل جديد</button>
       <button class="btn danger" onclick="deleteCurrentClient()">حذف العميل</button>
     </div>
-    <div id="clientSaved" class="saved hidden"><b>✓</b> تم حفظ بيانات العميل على الجهاز.</div><div id="syncStatus" class="syncbar">Live Sync: اضغط «مزامنة العملاء الآن» لجلب البيانات ومزامنتها</div><div class="actions"><button class="btn" onclick="syncNow()">مزامنة العملاء الآن ↻</button><button class="btn" onclick="restoreBackup()">استرجاع آخر نسخة احتياطية</button></div>
+    <div id="clientSaved" class="saved hidden"><b>✓</b> تم حفظ بيانات العميل على الجهاز.</div><div id="syncStatus" class="syncbar">Live Sync: لم تبدأ المزامنة بعد</div><div class="actions"><button class="btn" onclick="syncNow()">مزامنة العملاء الآن ↻</button><button class="btn" onclick="restoreBackup()">استرجاع آخر نسخة احتياطية</button></div>
     <div class="linkbox">
       <div class="eyebrow">CLIENT PORTAL LINK</div>
       <div class="muted">بعد ما تخلص الدايت والتمرين، اضغط إنشاء اللينك.</div>
@@ -120,14 +120,14 @@ nav button{width:100%;border:0;background:transparent;color:#aeb7c2;text-align:r
 </section>
 
 <section id="report" class="page">
-  <div class="section"><div><span class="eyebrow">CLIENT REPORT</span><h2>متابعة تسجيلات العميل</h2></div><button class="btn" onclick="renderReport()">جلب آخر متابعة ↻</button></div>
+  <div class="section"><div><span class="eyebrow">CLIENT REPORT</span><h2>متابعة تسجيلات العميل</h2></div><button class="btn" onclick="renderReport()">تحديث ↻</button></div>
   <div class="cards">
     <div class="card stat"><span class="muted">المياه</span><b id="reportWater">0/8</b><span class="muted">today</span></div>
     <div class="card stat"><span class="muted">تسجيلات الوزن</span><b id="reportWeights">0</b><span class="muted">entries</span></div>
     <div class="card stat"><span class="muted">أوزان الجيم</span><b id="reportGym">0</b><span class="muted">entries</span></div>
     <div class="card stat"><span class="muted">آخر وزن</span><b id="reportLastWeight">--</b><span class="muted">kg</span></div>
   </div>
-  <div id="reportSync" class="muted" style="margin-top:8px">جاري تجهيز المتابعة...</div><div class="section"><h2>سجل الوزن</h2></div>
+  <div class="section"><h2>سجل الوزن</h2></div>
   <div class="card"><table class="table"><thead><tr><th>الأسبوع</th><th>الوزن</th><th>التاريخ</th><th>ملاحظة</th></tr></thead><tbody id="weightRows"></tbody></table></div>
   <div class="section"><h2>أوزان الجيم</h2></div><div id="gymRows"></div>
 </section>
@@ -148,6 +148,7 @@ const APP_KEY="AHMED_COACHING_MULTI_1";
 const BACKUP_KEY="AHMED_COACHING_AUTO_BACKUP_1";
 const SUPABASE_URL="https://zqrjaseceqgmgtokvkvi.supabase.co";
 const SUPABASE_KEY="sb_publishable_lGakUfjfRL9gcy9-XxW--Q_0b0HeSB7";
+const GAS_SYNC_URL="https://script.google.com/macros/s/AKfycbyfUVOD_M4DRVOTey0OtsVvZqmB_HQYyagzxIYgaFgdksT48cpYENfGYAeALO7nIYz3cw/exec";
 let state=loadState();
 let syncBusy=false;
 function backupState(reason="auto"){
@@ -179,13 +180,6 @@ async function sbFetch(path,options={}){
         const m=path.match(/^coach_clients_live\?(.+)$/);
         let query=m?new URLSearchParams(m[1]):new URLSearchParams();
         q=q.select(query.get("select")||"*");
-        for(const [key,value] of query.entries()){
-          if(key==="select"||key==="limit"||key==="order") continue;
-          if(value.startsWith("eq.")) q=q.eq(key,value.slice(3));
-          else if(value.startsWith("neq.")) q=q.neq(key,value.slice(4));
-          else if(value.startsWith("gte.")) q=q.gte(key,value.slice(4));
-          else if(value.startsWith("lte.")) q=q.lte(key,value.slice(4));
-        }
         if(query.has("limit"))q=q.limit(Number(query.get("limit")));
         if(query.has("order")){const [col,dir]=query.get("order").split(".");q=q.order(col,{ascending:dir!=="desc"});}
         const {data,error}=await q; if(error)throw new Error(error.message); return data;
@@ -212,10 +206,29 @@ async function sbFetch(path,options={}){
     if(!r.ok)throw new Error("HTTP "+r.status+" — "+(text||"Supabase rejected the request"));
     try{return text?JSON.parse(text):null}catch(_){return null}
   }catch(e){
-    throw new Error("تعذر الاتصال بـ Supabase. راجع اتصال الإنترنت أو إعدادات Supabase. التفاصيل: "+(e?.message||"Failed to fetch"));
+    throw new Error("تعذر الوصول إلى Supabase. افتح الموقع بدون VPN/مانع إعلانات وجرب مرة أخرى. التفاصيل: "+(e?.message||"Failed to fetch"));
   }
 }
 
+function gasPostLogs(clientId,clientName,email,logs){
+  if(!clientId)return Promise.resolve(false);
+  const payload={action:"saveLogs",clientId:String(clientId),clientName:clientName||"",email:email||"",logs:logs||emptyLogs()};
+  return fetch(GAS_SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),keepalive:true})
+    .then(()=>true).catch(e=>{console.warn("Google Apps Script save",e);return false});
+}
+function gasGetLogs(clientId){
+  return new Promise((resolve,reject)=>{
+    if(!clientId)return resolve(null);
+    const cb="__ahmedGasCb_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+    const script=document.createElement("script");
+    const cleanup=()=>{try{delete window[cb]}catch(e){};script.remove()};
+    const timer=setTimeout(()=>{cleanup();reject(new Error("انتهت مهلة الاتصال بـ Google Sheets"))},12000);
+    window[cb]=(data)=>{clearTimeout(timer);cleanup();resolve(data)};
+    script.onerror=()=>{clearTimeout(timer);cleanup();reject(new Error("تعذر قراءة بيانات العميل من Google Sheets"))};
+    script.src=GAS_SYNC_URL+"?clientId="+encodeURIComponent(clientId)+"&callback="+encodeURIComponent(cb)+"&_="+Date.now();
+    document.body.appendChild(script);
+  });
+}
 function emptyLogs(){return {weights:[],water:0,gym:[]}}
 function mergeLogs(a,b){
   const A=Object.assign(emptyLogs(),a||{}), B=Object.assign(emptyLogs(),b||{});
@@ -235,56 +248,23 @@ async function testSupabaseConnection(){
 }
 async function syncNow(){
   if(syncBusy)return;
-  syncBusy=true;
-  setSync("Live Sync: جاري جلب البيانات…");
+  const c=currentClient();
+  if(!c){setSync("Live Sync: لا يوجد عميل مختار");return}
+  syncBusy=true; setSync("Live Sync: جاري قراءة بيانات العميل…");
   try{
     backupState("before-sync");
-    // 1) Pull everything from Supabase first.
-    const remote=await sbFetch("coach_clients_live?select=*&order=updated_at.desc");
-    const rows=Array.isArray(remote)?remote:[];
-
-    // 2) Merge remote clients into the local workspace without deleting anything.
-    for(const r of rows){
-      let c=state.clients.find(x=>x.id===r.id);
-      if(!c){
-        c=normalizeClient({id:r.id,name:r.name||"",email:r.email||"",age:r.age??"",height:r.height??"",weight:r.weight??"",goal:r.goal||"",meals:Array.isArray(r.meals)?r.meals:[],days:Array.isArray(r.days)?r.days:[]});
-        state.clients.push(c);
-      }else{
-        // Remote data fills/refreshes the client when it exists there.
-        if(r.name)c.name=r.name;
-        if(r.email)c.email=r.email;
-        if(r.age!==null&&r.age!==undefined)c.age=r.age;
-        if(r.height!==null&&r.height!==undefined)c.height=r.height;
-        if(r.weight!==null&&r.weight!==undefined)c.weight=r.weight;
-        if(r.goal)c.goal=r.goal;
-        if(Array.isArray(r.meals)&&r.meals.length)c.meals=r.meals;
-        if(Array.isArray(r.days)&&r.days.length)c.days=r.days;
-      }
-      if(r.logs){
-        const merged=mergeLogs(getLogsFor(c),r.logs);
-        localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(merged));
-      }
+    const remote=await gasGetLogs(c.id);
+    if(remote?.ok && remote?.logs){
+      const merged=mergeLogs(getLogsFor(c),remote.logs);
+      localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(merged));
     }
-
-    // 3) Push local clients once, preserving remote logs and local logs together.
-    for(const c of state.clients){
-      const rr=rows.find(x=>x.id===c.id);
-      const payload=clientForRemote(c,rr?.logs||null);
-      await sbFetch("coach_clients_live?on_conflict=id",{
-        method:"POST",
-        headers:{Prefer:"resolution=merge-duplicates,return=minimal"},
-        body:JSON.stringify(payload)
-      });
-      localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(payload.logs));
-    }
-
+    const logs=getLogsFor(c);
+    const sent=await gasPostLogs(c.id,c.name,c.email,logs);
+    if(!sent)throw new Error("تعذر إرسال البيانات إلى Google Sheets");
     localStorage.setItem(APP_KEY,JSON.stringify(state));
-    renderAll();
-    setSync("Live Sync: تمت المزامنة بنجاح ✓ — البيانات اتجابت واتحفظت", "ok");
-  }catch(e){
-    console.error("LIVE SYNC ERROR",e);
-    setSync("Live Sync: فشل — "+(e?.message||"خطأ غير معروف"),"err");
-  }finally{syncBusy=false}
+    renderAll(); setSync("Live Sync: Google Sheets متصل ✓", "ok");
+  }catch(e){console.error(e);setSync("Live Sync: فشل — "+e.message,"err");}
+  finally{syncBusy=false}
 }
 
 function uid(){return "c_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7)}
@@ -297,17 +277,7 @@ function showPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 function selectClient(id){state.activeId=id;persist();showPage("client")}
 function newClient(){state.activeId=null;["cName","cEmail","cAge","cHeight","cWeight","cGoal"].forEach(id=>document.getElementById(id).value="");document.getElementById("clientLink").value="";document.getElementById("clientSaved").classList.add("hidden");showPage("client");renderAll()}
-async function saveClient(){
-  const name=cName.value.trim();
-  if(!name){alert("اكتب اسم العميل الأول");return}
-  let c=currentClient();
-  if(!c){c=normalizeClient({});state.clients.unshift(c);state.activeId=c.id}
-  c.name=name;c.email=cEmail.value.trim();c.age=cAge.value;c.height=cHeight.value;c.weight=cWeight.value;c.goal=cGoal.value.trim();
-  persist();
-  backupState("client-save");
-  document.getElementById("clientSaved").classList.remove("hidden");
-  await syncNow();
-}
+function saveClient(){const name=cName.value.trim();if(!name){alert("اكتب اسم العميل الأول");return}let c=currentClient();if(!c){c=normalizeClient({});state.clients.unshift(c);state.activeId=c.id}c.name=name;c.email=cEmail.value.trim();c.age=cAge.value;c.height=cHeight.value;c.weight=cWeight.value;c.goal=cGoal.value.trim();persist();document.getElementById("clientSaved").classList.remove("hidden"); syncNow();}
 function deleteCurrentClient(){const c=currentClient();if(!c)return;if(!confirm("تحذف العميل "+c.name+" بكل بياناته؟"))return;state.clients=state.clients.filter(x=>x.id!==c.id);state.activeId=state.clients[0]?.id||null;persist();showPage("home")}
 function fillClient(){const c=currentClient(),ids=["cName","cEmail","cAge","cHeight","cWeight","cGoal"];if(!c){ids.forEach(id=>document.getElementById(id).value="");return}cName.value=c.name||"";cEmail.value=c.email||"";cAge.value=c.age||"";cHeight.value=c.height||"";cWeight.value=c.weight||"";cGoal.value=c.goal||""}
 function renderClientList(){const box=document.getElementById("clientList");if(!box)return;box.innerHTML=state.clients.length?state.clients.map(c=>`<div class="card" style="cursor:pointer" onclick="selectClient('${c.id}')"><div style="display:flex;justify-content:space-between;gap:12px"><div><span class="eyebrow">CLIENT</span><h3 style="margin:5px 0">${esc(c.name||"بدون اسم")}</h3><div class="muted">${esc(c.goal||"بدون هدف")} • ${esc(c.weight||"--")} kg</div></div><span class="tag">${c.id===state.activeId?"مفتوح":"فتح"}</span></div><div class="muted" style="margin-top:10px">Diet ${c.meals.length} • Training ${c.days.length}/5</div><div class="actions"><button class="btn primary" onclick="event.stopPropagation();selectClient('${c.id}')">متابعة العميل</button><button class="btn" onclick="event.stopPropagation();generateLinkFor('${c.id}')">لينك العميل</button></div></div>`).join(""):'<div class="card empty" style="grid-column:1/-1">لسه مفيش عملاء. اضغط «إضافة عميل» وابدأ أول ملف.</div>'}
@@ -333,35 +303,17 @@ async function renderReport(){
   let l=getLogs();
   if(c?.id){
     try{
-      const remote=await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(c.id)+"&select=logs");
-      if(remote?.[0]?.logs){
-        l=mergeLogs(l,remote[0].logs);
-        localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(l));
-      }
-      const stamp=document.getElementById("reportSync");
-      if(stamp){stamp.textContent="آخر قراءة للمتابعة: الآن ✓";stamp.className="saved";}
-    }catch(e){
-      console.warn("report remote",e);
-      const stamp=document.getElementById("reportSync");
-      if(stamp){stamp.textContent="المتابعة المعروضة من آخر بيانات محفوظة على الجهاز";stamp.className="muted";}
-    }
+      const remote=await gasGetLogs(c.id);
+      if(remote?.ok && remote?.logs){l=mergeLogs(l,remote.logs);localStorage.setItem("AHMED_CLIENT_LOGS_"+c.id,JSON.stringify(l));}
+    }catch(e){console.warn("report remote",e)}
   }
-  l=Object.assign({weights:[],water:0,gym:[]},l||{});
-  reportWater.textContent=(l.water||0)+"/8";
-  reportWeights.textContent=l.weights.length;
-  reportGym.textContent=l.gym.length;
-  reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";
-  weightRows.innerHTML=l.weights.length
-    ? l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join("")
-    : '<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';
-  gymRows.innerHTML=l.gym.length
-    ? l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join("")
-    : '<div class="card empty">لا توجد أوزان جيم مسجلة.</div>';
+  reportWater.textContent=(l.water||0)+"/8";reportWeights.textContent=l.weights.length;reportGym.textContent=l.gym.length;reportLastWeight.textContent=l.weights.length?l.weights[l.weights.length-1].weight:"--";weightRows.innerHTML=l.weights.length?l.weights.slice().reverse().map(x=>`<tr><td>${esc(x.week)}</td><td>${esc(x.weight)} kg</td><td>${esc(x.date)}</td><td>${esc(x.note||"--")}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">لا توجد تسجيلات وزن.</td></tr>';gymRows.innerHTML=l.gym.length?l.gym.slice().reverse().map(x=>`<div class="log"><strong>${esc(x.exercise)}</strong><div class="muted">${esc(x.day||"")} • ${esc(x.weight)} kg • ${esc(x.reps)} reps • ${esc(x.date)}</div></div>`).join(""):'<div class="card empty">لا توجد أوزان جيم مسجلة.</div>'
 }
-function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining()}
+function renderAll(){fillClient();renderClientList();const c=currentClient();dashName.textContent=c?.name||"--";dashWeight.textContent=c?.weight||"--";miniName.textContent=c?.name||"No Client";miniGoal.textContent=c?.goal||"Coach Workspace";renderMeals();renderTraining();renderReport()}
 backupState("startup");
 renderAll();
-
+if(!location.hash.startsWith("#client=")) setTimeout(()=>syncNow(),300);
+setInterval(()=>{ if(!location.hash.startsWith("#client=") && currentClient()) syncNow(); },10000);
 function decodePortal(){
   const m=location.hash.match(/^#client=(.+)$/);
   if(!m)return null;
@@ -380,18 +332,6 @@ function portal(){
   portalTab("diet");
   loadPortalRemoteLogs();
 }
-async function loadPortalRemoteLogs(){
-  const id=window.PORTAL?.client?.id;
-  if(!id)return;
-  try{
-    const remote=await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(id)+"&select=logs");
-    if(remote?.[0]?.logs){
-      const merged=mergeLogs(portalLogs(),remote[0].logs);
-      localStorage.setItem(portalLogKey(),JSON.stringify(merged));
-      portalTab(document.querySelector(".portal-tabs .active")?.dataset.tab||"diet");
-    }
-  }catch(e){console.warn("portal remote logs",e)}
-}
 function portalLogKey(){return "AHMED_CLIENT_LOGS_"+(window.PORTAL.client.id||window.PORTAL.client.email||window.PORTAL.client.name)}
 function portalLogs(){try{return Object.assign({weights:[],water:0,gym:[]},JSON.parse(localStorage.getItem(portalLogKey())||"{}"))}catch(e){return{weights:[],water:0,gym:[]}}}
 async function savePortalLogs(l){
@@ -399,21 +339,21 @@ async function savePortalLogs(l){
   localStorage.setItem(portalLogKey(),JSON.stringify(merged));
   const id=window.PORTAL?.client?.id;
   if(!id)return;
-  try{
-    const remote=await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(id)+"&select=logs");
-    const remoteLogs=remote?.[0]?.logs||null;
-    const finalLogs=mergeLogs(merged,remoteLogs);
-    await sbFetch("coach_clients_live?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({logs:finalLogs,updated_at:new Date().toISOString()})});
-    localStorage.setItem(portalLogKey(),JSON.stringify(finalLogs));
-  }catch(e){
-    console.error("remote log save",e);
-    try{
-      await sbFetch("coach_clients_live?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id,name:window.PORTAL.client.name||"",email:window.PORTAL.client.email||"",age:window.PORTAL.client.age||null,height:window.PORTAL.client.height||null,weight:window.PORTAL.client.weight||null,goal:window.PORTAL.client.goal||"",meals:window.PORTAL.meals||[],days:window.PORTAL.days||[],logs:merged,updated_at:new Date().toISOString()})});
-    }catch(e2){
-      alert("تم الحفظ على جهازك، لكن الـLive Sync فشل: "+e2.message);
-    }
-  }
+  const ok=await gasPostLogs(id,window.PORTAL.client.name||"",window.PORTAL.client.email||"",merged);
+  if(!ok)alert("تم الحفظ على جهازك، لكن تعذر إرسال البيانات إلى Google Sheets. حاول مرة أخرى.");
 }
+function loadPortalRemoteLogs(){
+  const id=window.PORTAL?.client?.id;
+  if(!id)return Promise.resolve();
+  return gasGetLogs(id).then(remote=>{
+    if(remote?.ok && remote?.logs){
+      const merged=mergeLogs(portalLogs(),remote.logs);
+      localStorage.setItem(portalLogKey(),JSON.stringify(merged));
+      portalTab("diet");
+    }
+  }).catch(e=>console.warn("portal remote logs",e));
+}
+
 
 function portalTab(tab){
   document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
